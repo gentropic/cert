@@ -1,0 +1,12 @@
+{
+  "@context": [
+    "https://www.w3.org/ns/credentials/v2",
+    "https://purl.imsglobal.org/spec/ob/v3p0/context-3.0.3.json"
+  ],
+  "id": "did:web:gentropic.org",
+  "type": ["Profile"],
+  "name": "Geoscientific Chaos Union",
+  "description": "A collective exploring browser-native scientific computing, geoscience, and computational curiosity.",
+  "url": "https://gentropic.org",
+  "email": "arthur@endlein.one"
+}

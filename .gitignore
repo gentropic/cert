@@ -70,6 +70,18 @@ web_modules/
 .env.*
 !.env.example
 
+# Issuer signing key (Ed25519 PKCS8 PEM). Never commit.
+# Private half lives only in the GH Actions secret GCU_ISSUER_SIGNING_KEY
+# plus offline backup (hardware-backed storage or paper + vault).
+/GCU_ISSUER_SIGNING_KEY.pem
+*.pem
+
+# One-shot keygen/rotation scratch scripts. Always delete after use; this is a belt-and-braces.
+/.keygen-tmp.*
+
+# Local-only Claude Code guidance; not a tracked repo artifact.
+/CLAUDE.md
+
 # parcel-bundler cache (https://parceljs.org/)
 .cache
 .parcel-cache
