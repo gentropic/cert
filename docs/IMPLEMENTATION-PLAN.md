@@ -29,6 +29,33 @@ the forward-compatibility preparation; no package split yet.
   notice pointing to the new location. The `etc` repo returns to
   being a grab-bag for small experiments.
 
+## Decision log
+
+Working record of v1 scope changes made after the plan was first
+drafted. Not a replacement for the spec — the spec documents intent;
+this records deviations.
+
+- **2026-04-19 — OpenTimestamps (Phase 4) dropped.** The predating-
+  attack defense that OTS provides is narrow for workshop credentials
+  and adds meaningful operational complexity (Python dependency in
+  CI, nightly upgrade cron, in-browser `.ots` parser, `.ots`
+  attachments in the PDF, ledger-tip anchoring). Rekor (Phase 7)
+  already provides the independent third-party transparency witness
+  and covers most of the same threat surface. Cultural context:
+  "anchored to Bitcoin" has lost credibility with the target
+  technical audience since the speculation era, so the rhetorical
+  win no longer justifies the complexity. Spec §16 is left intact
+  as historical design material. Downstream phases adjust as
+  follows: Phase 6 (ledger tip) anchors via Rekor instead of OTS;
+  Phase 8 (PDF/A-3) drops `.ots` attachments (credential.json,
+  endorsement.json, .rekor.bundle only); Phase 11 (validator) drops
+  the OTS parser and shows Rekor inclusion time instead; Phase 12
+  (trust.html) narrates six trust mechanisms instead of seven.
+  Threat model in spec §15 should be re-read with the honest caveat
+  that a compromised signing key now invalidates past credentials
+  too, not only future ones — Rekor timestamping is the main
+  defense against post-compromise backdating.
+
 ## Build order
 
 The phases below are designed to produce a working, shippable system
@@ -116,23 +143,12 @@ Course catalog with alignment metadata.
 **Exit criteria:** five achievement JSONs committed, each with
 ESCO + O*NET alignment, CPD note, and criteria narrative.
 
-### Phase 4 — OpenTimestamps integration (~0.5d)
+### Phase 4 — OpenTimestamps integration *(DROPPED)*
 
-Bitcoin anchoring, operational.
-
-- [ ] `engine/src/ots.ts` — wrapper around calling the
-      `opentimestamps-client` CLI. Stamp a file, upgrade a file.
-- [ ] Extend `sign_and_publish` to OTS-stamp both credential and
-      endorsement immediately after signing.
-- [ ] Write `.github/workflows/upgrade-ots.yml` per §16.3 — nightly
-      cron that walks `cert/credentials/*.ots` and
-      `cert/endorsements/*.ots`, upgrades pending receipts.
-- [ ] Verify end-to-end: sign a test credential, wait for Bitcoin
-      confirmation, run upgrade, see the proof transition from
-      pending to Bitcoin-anchored.
-
-**Exit criteria:** emitted credentials carry `.ots` companions, nightly
-workflow upgrades them, upgraded proofs verify at opentimestamps.org.
+See the 2026-04-19 decision log entry above. Spec §16 is preserved
+as historical design material; the operational story for
+transparency/timestamping moves to Rekor in Phase 7 and to the
+ledger-tip anchoring in Phase 6.
 
 ### Phase 5 — StatusList2021 revocation (~0.75d)
 
