@@ -59,6 +59,11 @@ export interface StatusListConfig {
   nextIndexPath: string;
 }
 
+export interface LedgerConfig {
+  path: string;
+  tipPath?: string;
+}
+
 export interface EngineConfig {
   baseUrl: string;
   issuerId: string;
@@ -70,6 +75,7 @@ export interface EngineConfig {
   courses: Record<string, CourseEntry>;
   pinnedDocuments?: Record<string, unknown>;
   statusList?: StatusListConfig;
+  ledger?: LedgerConfig;
 }
 
 export interface IssuanceResult {
@@ -79,6 +85,7 @@ export interface IssuanceResult {
   credentialHash: string;
   endorsementHash: string;
   statusIndex?: number;
+  ledgerIndex?: number;
 }
 
 export interface Signer {

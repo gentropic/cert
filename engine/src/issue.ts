@@ -8,6 +8,7 @@ import { cryptosuite as eddsaRdfc2022CryptoSuite } from "@digitalbazaar/eddsa-rd
 import type { EngineConfig, IssuanceInput, IssuanceResult, StatusListConfig } from "./types.ts";
 import { loadSigner } from "./keys.ts";
 import { createDocumentLoader } from "./contexts.ts";
+import { appendEntry } from "./ledger.ts";
 
 async function assignStatusIndex(cfg: StatusListConfig): Promise<number> {
   let current = 0;
@@ -148,12 +149,29 @@ export async function signAndPublish(
   await Deno.writeTextFile(credentialPath, credentialJson);
   await Deno.writeTextFile(endorsementPath, endorsementJson);
 
+  const credentialHash = await sha256Hex(credentialJson);
+  const endorsementHash = await sha256Hex(endorsementJson);
+
+  let ledgerIndex: number | undefined;
+  if (config.ledger) {
+    const entry = await appendEntry({
+      ledgerPath: config.ledger.path,
+      tipPath: config.ledger.tipPath,
+      code,
+      credential_hash: `sha256:${credentialHash}`,
+      endorsement_hash: `sha256:${endorsementHash}`,
+      status_index: statusIndex,
+    });
+    ledgerIndex = entry.i;
+  }
+
   return {
     code,
     credentialPath,
     endorsementPath,
-    credentialHash: await sha256Hex(credentialJson),
-    endorsementHash: await sha256Hex(endorsementJson),
+    credentialHash,
+    endorsementHash,
     statusIndex,
+    ledgerIndex,
   };
 }
