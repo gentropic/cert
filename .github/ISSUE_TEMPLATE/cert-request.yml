@@ -1,0 +1,61 @@
+name: Certificate Request
+description: Request a GCU credential for a workshop you completed.
+title: "[cert] <your full name>"
+labels: ["cert-request"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        # GCU Certificate Request
+
+        Fill in the fields below. The **Completion Hash** is a 16-character
+        code shown during the workshop's claim form — it proves you were
+        present when the session ran.
+
+        Your credential will be issued automatically once the hash validates.
+        The resulting PDF, signed JSON credential, and verification links
+        will be posted back in this issue within ~2 minutes.
+  - type: input
+    id: name
+    attributes:
+      label: Full Name
+      description: Name as it should appear on the certificate. Any script (Latin, Cyrillic, CJK, etc.) is fine.
+      placeholder: Ana Costa
+    validations:
+      required: true
+  - type: dropdown
+    id: workshop
+    attributes:
+      label: Workshop
+      options:
+        - PB-101
+        - PB-201
+        - PB-301
+        - PB-401
+        - PB-501
+        - BM-301
+    validations:
+      required: true
+  - type: input
+    id: date
+    attributes:
+      label: Completion Date
+      description: ISO date (YYYY-MM-DD) when you completed the workshop.
+      placeholder: "2026-04-19"
+    validations:
+      required: true
+  - type: input
+    id: hash
+    attributes:
+      label: Completion Hash
+      description: The 16-character hex code shown to you during the workshop claim form.
+      placeholder: abcd1234ef567890
+    validations:
+      required: true
+  - type: input
+    id: email
+    attributes:
+      label: Email (optional)
+      description: If provided, it's hashed into the credential's recipient ID but never stored in plaintext.
+    validations:
+      required: false

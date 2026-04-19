@@ -1,0 +1,169 @@
+name: Emit Certificate
+on:
+  issues:
+    types: [opened, labeled]
+
+concurrency:
+  group: cert-emission
+  cancel-in-progress: false
+
+jobs:
+  emit:
+    if: contains(github.event.issue.labels.*.name, 'cert-request')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      issues: write
+      id-token: write
+      attestations: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Parse and validate
+        id: parse
+        uses: actions/github-script@v7
+        env:
+          WORKSHOP_SALT: ${{ secrets.GCU_WORKSHOP_SALT }}
+        with:
+          script: |
+            const crypto = require('crypto');
+            const body = context.payload.issue.body ?? '';
+
+            // GH Issue Form: each field is "### <Label>\n\n<value>".
+            const parseField = (label) => {
+              const re = new RegExp(`### ${label}\\s*\\n+([^\\n]+)`, 'i');
+              const m = body.match(re);
+              if (!m) return '';
+              const v = m[1].trim();
+              return v === '_No response_' ? '' : v;
+            };
+
+            const name = parseField('Full Name');
+            const workshop = parseField('Workshop').toUpperCase();
+            const date = parseField('Completion Date');
+            const hash = parseField('Completion Hash').toLowerCase();
+            const email = parseField('Email');
+
+            const errors = [];
+            if (!name || name.length < 2 || name.length > 100) errors.push('Invalid name.');
+            if (!/^(PB-[1-5]01|BM-[1-5]01)$/.test(workshop)) errors.push(`Invalid workshop: ${workshop}`);
+            if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) errors.push(`Invalid date: ${date}`);
+            if (!/^[0-9a-f]{16}$/.test(hash)) errors.push(`Invalid hash: ${hash}`);
+            if (!errors.length) {
+              const d = new Date(date + 'T00:00:00Z');
+              if (isNaN(d.getTime())) errors.push(`Invalid calendar date: ${date}`);
+            }
+            if (!errors.length) {
+              const salt = process.env.WORKSHOP_SALT;
+              if (!salt) {
+                errors.push('GCU_WORKSHOP_SALT is not configured; ask the workshop facilitator.');
+              } else {
+                const expected = crypto.createHash('sha256')
+                  .update(`${workshop}:${date}:${salt}`)
+                  .digest('hex').slice(0, 16);
+                if (hash !== expected) errors.push('Completion hash does not match. Use the claim form shown during the workshop.');
+              }
+            }
+
+            core.setOutput('name', name);
+            core.setOutput('workshop', workshop);
+            core.setOutput('date', date);
+            core.setOutput('email', email);
+            core.setOutput('errors', errors.join(' '));
+
+      - name: Reply with validation errors and stop
+        if: steps.parse.outputs.errors != ''
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const msg = `❌ Certificate request failed validation:\n\n> ${process.env.ERRORS}\n\nPlease fix and reopen, or open a new request.`;
+            github.rest.issues.createComment({
+              ...context.repo,
+              issue_number: context.issue.number,
+              body: msg,
+            });
+            github.rest.issues.update({
+              ...context.repo,
+              issue_number: context.issue.number,
+              state: 'closed',
+            });
+        env:
+          ERRORS: ${{ steps.parse.outputs.errors }}
+
+      - name: Install Deno
+        if: steps.parse.outputs.errors == ''
+        uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+
+      - name: Install cosign
+        if: steps.parse.outputs.errors == ''
+        uses: sigstore/cosign-installer@v3
+
+      - name: Issue credential
+        if: steps.parse.outputs.errors == ''
+        id: issue
+        env:
+          GCU_ISSUER_SIGNING_KEY: ${{ secrets.GCU_ISSUER_SIGNING_KEY }}
+          GCU_CODE_SALT: ${{ secrets.GCU_CODE_SALT }}
+          GCU_RECIPIENT_SALT: ${{ secrets.GCU_RECIPIENT_SALT }}
+          GCU_ENABLE_REKOR: "1"
+        run: |
+          set -euo pipefail
+          args=( \
+            --name "${{ steps.parse.outputs.name }}" \
+            --course "${{ steps.parse.outputs.workshop }}" \
+            --date "${{ steps.parse.outputs.date }}" \
+          )
+          if [ -n "${{ steps.parse.outputs.email }}" ]; then
+            args+=( --email "${{ steps.parse.outputs.email }}" )
+          fi
+          result=$(deno task --quiet cli issue "${args[@]}")
+          echo "$result"
+          code=$(echo "$result" | deno eval 'const j=JSON.parse(await new Response(Deno.stdin.readable).text()); console.log(j.code)')
+          echo "code=$code" >> "$GITHUB_OUTPUT"
+
+      - name: Commit artifacts
+        if: steps.parse.outputs.errors == ''
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add credentials/ endorsements/ pdfs/ ledger.jsonl ledger.tip ledger.tip.rekor.bundle status/.next-index
+          git commit -m "Issue ${{ steps.issue.outputs.code }} for ${{ steps.parse.outputs.name }}"
+          git push
+
+      - name: Reply with success
+        if: steps.parse.outputs.errors == ''
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const code = process.env.CODE;
+            const name = process.env.NAME;
+            const encName = encodeURIComponent(name);
+            const msg = [
+              `🎓 **${code}**`,
+              ``,
+              `🔗 [View certificate](https://gentropic.org/cert/#v=${code}&n=${encName})`,
+              `📄 [Signed credential JSON](https://gentropic.org/cert/credentials/${code}.json)`,
+              `🔖 [Self-endorsement](https://gentropic.org/cert/endorsements/${code}.json)`,
+              `📑 [PDF certificate](https://gentropic.org/cert/pdfs/${code}.pdf)`,
+              `🪵 [Rekor inclusion proof](https://gentropic.org/cert/credentials/${code}.rekor.bundle)`,
+              ``,
+              `Verify the credential cryptographically at the validator link above, or with any OBv3-compatible verifier.`,
+            ].join('\n');
+            github.rest.issues.createComment({
+              ...context.repo,
+              issue_number: context.issue.number,
+              body: msg,
+            });
+            github.rest.issues.update({
+              ...context.repo,
+              issue_number: context.issue.number,
+              state: 'closed',
+              state_reason: 'completed',
+            });
+        env:
+          CODE: ${{ steps.issue.outputs.code }}
+          NAME: ${{ steps.parse.outputs.name }}

@@ -92,6 +92,11 @@ async function buildFullConfig(repoRoot: string): Promise<EngineConfig> {
       fontsDir: resolve(repoRoot, "fonts"),
       iccProfilePath: resolve(repoRoot, "sRGB-IEC61966-2.1.icc"),
     },
+    // Rekor transparency logging: opt in via env. CI (emit-cert) sets
+    // GCU_ENABLE_REKOR=1 and has OIDC available; local dev usually skips.
+    ...(Deno.env.get("GCU_ENABLE_REKOR") === "1"
+      ? { rekor: { cosignPath: Deno.env.get("COSIGN_PATH") ?? "cosign" } }
+      : {}),
   };
 }
 
