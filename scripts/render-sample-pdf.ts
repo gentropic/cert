@@ -23,8 +23,15 @@ if (!course) {
 }
 
 const fonts = await loadPlexFonts(resolve(repoRoot, "fonts"));
+const iccProfile = await Deno.readFile(resolve(repoRoot, "sRGB-IEC61966-2.1.icc"));
+const stubJson = new TextEncoder().encode('{"@context":["https://www.w3.org/ns/credentials/v2"],"type":["VerifiableCredential"]}');
+
 const bytes = await renderCertificatePdf({
   fonts,
+  iccProfile,
+  issuerId: "did:web:gentropic.org",
+  credentialHash: "0".repeat(64),
+  attachments: { credentialJson: stubJson, endorsementJson: stubJson },
   recipientName: "Jéssica Fernanda Bastos da Matta",
   courseName: course.name,
   courseCode: courseKey,

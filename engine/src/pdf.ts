@@ -11,11 +11,19 @@ import fontkit from "@pdf-lib/fontkit";
 // @ts-ignore — no bundled types
 import QRCode from "qrcode";
 
+import { applyPdfA3, type PdfAttachment } from "./pdfa.ts";
+
 export interface FontBytes {
   sansRegular: Uint8Array;
   sansBold: Uint8Array;
   monoRegular: Uint8Array;
   monoBold: Uint8Array;
+}
+
+export interface PdfAttachments {
+  credentialJson?: Uint8Array;
+  endorsementJson?: Uint8Array;
+  rekorBundle?: Uint8Array;
 }
 
 export async function loadPlexFonts(fontsDir: string): Promise<FontBytes> {
@@ -44,6 +52,10 @@ export interface CertificateInput {
   validatorUrl: string;
   accentColor?: string;
   fonts: FontBytes;
+  issuerId?: string; // did:web:... — for XMP metadata only
+  credentialHash?: string; // sha256 hex of the signed credential JSON, for XMP
+  iccProfile?: Uint8Array; // sRGB IEC61966-2.1; enables PDF/A-3 when + attachments supplied
+  attachments?: PdfAttachments;
 }
 
 function hexToRgb(hex: string): { r: number; g: number; b: number } {
@@ -207,6 +219,52 @@ export async function renderCertificatePdf(input: CertificateInput): Promise<Uin
     width: qrSize,
     height: qrSize,
   });
+
+  // PDF/A-3 enrichment: ICC output intent, XMP metadata, attachments table.
+  // Active when the caller supplies an ICC profile (attachments optional).
+  if (input.iccProfile) {
+    const attachments: PdfAttachment[] = [];
+    if (input.attachments?.credentialJson) {
+      attachments.push({
+        name: "credential.json",
+        bytes: input.attachments.credentialJson,
+        mimeType: "application/ld+json",
+        description: "Open Badges v3 signed Verifiable Credential",
+        relationship: "Source",
+      });
+    }
+    if (input.attachments?.endorsementJson) {
+      attachments.push({
+        name: "endorsement.json",
+        bytes: input.attachments.endorsementJson,
+        mimeType: "application/ld+json",
+        description: "Self-endorsement EndorsementCredential",
+        relationship: "Supplement",
+      });
+    }
+    if (input.attachments?.rekorBundle) {
+      attachments.push({
+        name: "credential.rekor.bundle",
+        bytes: input.attachments.rekorBundle,
+        mimeType: "application/json",
+        description: "Sigstore Rekor inclusion proof for credential.json",
+        relationship: "Supplement",
+      });
+    }
+    await applyPdfA3(pdf, {
+      iccProfile: input.iccProfile,
+      xmp: {
+        title: `Certificate — ${input.courseName}`,
+        subject: `${input.credentialCode} — ${input.recipientName}`,
+        creator: input.issuerName,
+        credentialCode: input.credentialCode,
+        issuerId: input.issuerId ?? input.issuerName,
+        credentialHash: input.credentialHash,
+      },
+      attachments,
+    });
+    return await pdf.save({ useObjectStreams: false });
+  }
 
   return await pdf.save();
 }

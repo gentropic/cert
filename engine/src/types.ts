@@ -88,6 +88,9 @@ export interface PdfConfig {
   validatorUrlTemplate: string;
   // Directory containing IBMPlex{Sans,Mono}-{Regular,Bold}.otf.
   fontsDir: string;
+  // Path to sRGB ICC profile. When set, PDF/A-3B enrichment activates and the
+  // signed credential + endorsement are embedded as associated files.
+  iccProfilePath?: string;
 }
 
 export interface EngineConfig {

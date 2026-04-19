@@ -167,12 +167,18 @@ export async function signAndPublish(
     ledgerIndex = entry.i;
   }
 
+  const credentialBytes = new TextEncoder().encode(credentialJson);
+  const endorsementBytes = new TextEncoder().encode(endorsementJson);
+
   let pdfPath: string | undefined;
   if (config.pdf) {
     const validatorUrl = config.pdf.validatorUrlTemplate
       .replace("{code}", encodeURIComponent(code))
       .replace("{name}", encodeURIComponent(input.name));
     const fonts = await loadPlexFonts(config.pdf.fontsDir);
+    const iccProfile = config.pdf.iccProfilePath
+      ? await Deno.readFile(config.pdf.iccProfilePath)
+      : undefined;
     const pdfBytes = await renderCertificatePdf({
       recipientName: input.name,
       courseName: course.name,
@@ -188,6 +194,16 @@ export async function signAndPublish(
       validatorUrl,
       accentColor: course.seriesMeta?.accent,
       fonts,
+      issuerId: config.issuerId,
+      credentialHash,
+      iccProfile,
+      attachments: iccProfile
+        ? {
+          credentialJson: credentialBytes,
+          endorsementJson: endorsementBytes,
+          // rekorBundle filled in below after cosign runs
+        }
+        : undefined,
     });
     pdfPath = `${config.pdf.outputDir}/${code}.pdf`;
     await Deno.mkdir(config.pdf.outputDir, { recursive: true });
