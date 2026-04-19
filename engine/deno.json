@@ -1,14 +1,18 @@
 {
-  "name": "@gentropic/cert-engine",
-  "version": "0.0.0",
   "tasks": {
-    "check": "deno check src/**/*.ts cli.ts",
-    "test": "deno test",
+    "check": "deno check src/**/*.ts tests/**/*.ts",
+    "test": "deno test --allow-read --allow-write --allow-env",
     "fmt": "deno fmt"
+  },
+  "imports": {
+    "@digitalbazaar/vc": "npm:@digitalbazaar/vc@^7.1.2",
+    "@digitalbazaar/data-integrity": "npm:@digitalbazaar/data-integrity@^2.5.0",
+    "@digitalbazaar/eddsa-rdfc-2022-cryptosuite": "npm:@digitalbazaar/eddsa-rdfc-2022-cryptosuite@^1.1.0",
+    "@digitalbazaar/ed25519-multikey": "npm:@digitalbazaar/ed25519-multikey@^1.3.1"
   },
   "compilerOptions": {
     "strict": true,
-    "lib": ["deno.window", "dom"]
+    "lib": ["deno.ns", "dom"]
   },
   "fmt": {
     "lineWidth": 100,

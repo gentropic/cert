@@ -1,0 +1,9 @@
+{
+  "TEST-101": {
+    "name": "Test Course 101",
+    "description": "A test course exercising the signing pipeline.",
+    "hours": 3,
+    "tags": ["test"],
+    "language": "en"
+  }
+}
