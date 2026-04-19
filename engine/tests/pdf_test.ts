@@ -1,8 +1,13 @@
 import { assertEquals } from "jsr:@std/assert@^1";
-import { renderCertificatePdf } from "../src/pdf.ts";
+import { loadPlexFonts, renderCertificatePdf } from "../src/pdf.ts";
+import { dirname, fromFileUrl, resolve } from "jsr:@std/path@^1";
+
+const repoRoot = resolve(dirname(fromFileUrl(import.meta.url)), "..", "..");
 
 Deno.test("pdf: renderCertificatePdf produces a valid PDF with expected metadata", async () => {
+  const fonts = await loadPlexFonts(resolve(repoRoot, "fonts"));
   const bytes = await renderCertificatePdf({
+    fonts,
     recipientName: "Ana Costa",
     courseName: "Patchbay 101 — API Workshop",
     courseCode: "PB-101",

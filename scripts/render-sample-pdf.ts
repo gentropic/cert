@@ -7,7 +7,7 @@
 
 import { dirname, fromFileUrl, resolve } from "jsr:@std/path@^1";
 import { loadCourses } from "../engine/src/courses.ts";
-import { renderCertificatePdf } from "../engine/src/pdf.ts";
+import { loadPlexFonts, renderCertificatePdf } from "../engine/src/pdf.ts";
 
 const courseKey = Deno.args[0] ?? "PB-101";
 const outFile = Deno.args[1] ?? `sample-${courseKey}.pdf`;
@@ -22,7 +22,9 @@ if (!course) {
   Deno.exit(2);
 }
 
+const fonts = await loadPlexFonts(resolve(repoRoot, "fonts"));
 const bytes = await renderCertificatePdf({
+  fonts,
   recipientName: "Jéssica Fernanda Bastos da Matta",
   courseName: course.name,
   courseCode: courseKey,

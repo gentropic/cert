@@ -10,7 +10,7 @@ import { loadSigner } from "./keys.ts";
 import { createDocumentLoader } from "./contexts.ts";
 import { appendEntry } from "./ledger.ts";
 import { logBlob } from "./rekor.ts";
-import { renderCertificatePdf } from "./pdf.ts";
+import { loadPlexFonts, renderCertificatePdf } from "./pdf.ts";
 
 async function assignStatusIndex(cfg: StatusListConfig): Promise<number> {
   let current = 0;
@@ -172,6 +172,7 @@ export async function signAndPublish(
     const validatorUrl = config.pdf.validatorUrlTemplate
       .replace("{code}", encodeURIComponent(code))
       .replace("{name}", encodeURIComponent(input.name));
+    const fonts = await loadPlexFonts(config.pdf.fontsDir);
     const pdfBytes = await renderCertificatePdf({
       recipientName: input.name,
       courseName: course.name,
@@ -186,6 +187,7 @@ export async function signAndPublish(
       seriesName: course.seriesMeta?.name,
       validatorUrl,
       accentColor: course.seriesMeta?.accent,
+      fonts,
     });
     pdfPath = `${config.pdf.outputDir}/${code}.pdf`;
     await Deno.mkdir(config.pdf.outputDir, { recursive: true });

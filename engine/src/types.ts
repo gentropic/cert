@@ -86,6 +86,8 @@ export interface PdfConfig {
   // Template with `{code}` and `{name}` placeholders; produces the validator URL.
   // Example: "https://gentropic.org/cert/#v={code}&n={name}"
   validatorUrlTemplate: string;
+  // Directory containing IBMPlex{Sans,Mono}-{Regular,Bold}.otf.
+  fontsDir: string;
 }
 
 export interface EngineConfig {

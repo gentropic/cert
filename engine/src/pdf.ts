@@ -5,9 +5,29 @@
 // background — that lands in 8b alongside OFL font embedding.
 
 // @ts-ignore — no bundled types
-import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
+import { PDFDocument, rgb } from "pdf-lib";
+// @ts-ignore — no bundled types
+import fontkit from "@pdf-lib/fontkit";
 // @ts-ignore — no bundled types
 import QRCode from "qrcode";
+
+export interface FontBytes {
+  sansRegular: Uint8Array;
+  sansBold: Uint8Array;
+  monoRegular: Uint8Array;
+  monoBold: Uint8Array;
+}
+
+export async function loadPlexFonts(fontsDir: string): Promise<FontBytes> {
+  const read = (name: string) => Deno.readFile(`${fontsDir}/${name}`);
+  const [sansRegular, sansBold, monoRegular, monoBold] = await Promise.all([
+    read("IBMPlexSans-Regular.otf"),
+    read("IBMPlexSans-Bold.otf"),
+    read("IBMPlexMono-Regular.otf"),
+    read("IBMPlexMono-Bold.otf"),
+  ]);
+  return { sansRegular, sansBold, monoRegular, monoBold };
+}
 
 export interface CertificateInput {
   recipientName: string;
@@ -23,6 +43,7 @@ export interface CertificateInput {
   seriesName?: string;
   validatorUrl: string;
   accentColor?: string;
+  fonts: FontBytes;
 }
 
 function hexToRgb(hex: string): { r: number; g: number; b: number } {
@@ -49,6 +70,7 @@ export async function renderCertificatePdf(input: CertificateInput): Promise<Uin
   const qrPngBytes = Uint8Array.from(atob(qrPngDataUrl.split(",")[1]), (c) => c.charCodeAt(0));
 
   const pdf = await PDFDocument.create();
+  pdf.registerFontkit(fontkit);
   pdf.setTitle(`Certificate — ${input.courseName}`);
   pdf.setAuthor(input.issuerName);
   pdf.setSubject(`${input.credentialCode} — ${input.recipientName}`);
@@ -59,10 +81,11 @@ export async function renderCertificatePdf(input: CertificateInput): Promise<Uin
   const page = pdf.addPage([595, 842]);
   const { width, height } = page.getSize();
 
-  const sans = await pdf.embedFont(StandardFonts.Helvetica);
-  const sansBold = await pdf.embedFont(StandardFonts.HelveticaBold);
-  const mono = await pdf.embedFont(StandardFonts.Courier);
-  const monoBold = await pdf.embedFont(StandardFonts.CourierBold);
+  // Subset-embed IBM Plex so only the glyphs we actually use ship in the PDF.
+  const sans = await pdf.embedFont(input.fonts.sansRegular, { subset: true });
+  const sansBold = await pdf.embedFont(input.fonts.sansBold, { subset: true });
+  const mono = await pdf.embedFont(input.fonts.monoRegular, { subset: true });
+  const monoBold = await pdf.embedFont(input.fonts.monoBold, { subset: true });
 
   const accent = hexToRgb(input.accentColor ?? "#d4a017");
   const accentColor = rgb(accent.r, accent.g, accent.b);
