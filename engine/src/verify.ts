@@ -23,12 +23,27 @@ interface CredentialWithStatus {
   };
 }
 
+export interface VerifyOptions {
+  // Extra docs to pin (DID doc, verification method, status list).
+  pinnedDocuments?: Record<string, unknown>;
+  // Supply a loader directly for fetching-mode verification. If omitted,
+  // the strict offline loader is used.
+  documentLoader?: (url: string) => Promise<unknown>;
+}
+
 export async function verifyCredential(
   credential: unknown,
-  pinnedDocuments: Record<string, unknown> = {},
+  options: VerifyOptions | Record<string, unknown> = {},
 ): Promise<VerificationResult> {
+  // Back-compat: if the second arg looks like a plain pinnedDocuments map
+  // (not a VerifyOptions object with a `pinnedDocuments` key), treat it as pinned.
+  const opts: VerifyOptions = "pinnedDocuments" in options || "documentLoader" in options
+    ? (options as VerifyOptions)
+    : { pinnedDocuments: options as Record<string, unknown> };
+  const pinnedDocuments = opts.pinnedDocuments ?? {};
+
   const suite = new DataIntegrityProof({ cryptosuite: eddsaRdfc2022CryptoSuite });
-  const documentLoader = createDocumentLoader(pinnedDocuments);
+  const documentLoader = opts.documentLoader ?? createDocumentLoader(pinnedDocuments);
 
   let revoked = false;
   const statusErrors: unknown[] = [];

@@ -1,6 +1,7 @@
 {
   "workspace": ["./engine"],
   "tasks": {
+    "cli": "deno run --allow-read --allow-write --allow-env --allow-net engine/cli.ts",
     "build-achievements": "deno run --allow-read --allow-write scripts/build-achievements.ts",
     "init-status-list": "deno run --allow-read --allow-write --allow-env scripts/init-status-list.ts",
     "revoke": "deno run --allow-read --allow-write --allow-env scripts/revoke.ts",
