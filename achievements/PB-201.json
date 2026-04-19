@@ -1,0 +1,63 @@
+{
+  "@context": [
+    "https://www.w3.org/ns/credentials/v2",
+    "https://purl.imsglobal.org/spec/ob/v3p0/context-3.0.3.json"
+  ],
+  "id": "https://gentropic.org/cert/achievements/PB-201.json",
+  "type": [
+    "Achievement"
+  ],
+  "name": "Patchbay 201 — Bot Workshop",
+  "description": "Telegram Bot API and bot registration with BotFather; Polling architecture and the message loop; Command parsing, routing, and response handling; External API integration from bot context; State management and interactive conversation flow",
+  "criteria": {
+    "narrative": "Attend the full 4-hour Patchbay 201 — Bot Workshop and complete the in-workshop exercises. Completion is verified via a workshop-session hash."
+  },
+  "creditsAvailable": 4,
+  "inLanguage": "en",
+  "tag": [
+    "bot",
+    "telegram",
+    "api",
+    "polling",
+    "javascript"
+  ],
+  "alignment": [
+    {
+      "type": [
+        "Alignment"
+      ],
+      "targetFramework": "ESCO",
+      "targetCode": "21d2f96d-35f7-4e3f-9745-c533d2dd6e97",
+      "targetName": "computer programming",
+      "targetUrl": "http://data.europa.eu/esco/skill/21d2f96d-35f7-4e3f-9745-c533d2dd6e97"
+    },
+    {
+      "type": [
+        "Alignment"
+      ],
+      "targetFramework": "O*NET",
+      "targetCode": "15-1251.00",
+      "targetName": "Computer Programmers",
+      "targetUrl": "https://www.onetonline.org/link/summary/15-1251.00"
+    },
+    {
+      "type": [
+        "Alignment"
+      ],
+      "targetFramework": "ESCO",
+      "targetCode": "b0096dc5-2e2d-4bc1-8172-05bf486c3968",
+      "targetName": "design application interfaces",
+      "targetUrl": "http://data.europa.eu/esco/skill/b0096dc5-2e2d-4bc1-8172-05bf486c3968"
+    },
+    {
+      "type": [
+        "Alignment"
+      ],
+      "targetFramework": "O*NET",
+      "targetCode": "15-1254.00",
+      "targetName": "Web Developers",
+      "targetUrl": "https://www.onetonline.org/link/summary/15-1254.00"
+    }
+  ],
+  "@note_cpd": "Workshops may be eligible for Continuing Professional Development (CPD) hours under relevant professional society frameworks (e.g., AusIMM Category 1 — Formal Learning) subject to member self-assessment and society audit."
+}

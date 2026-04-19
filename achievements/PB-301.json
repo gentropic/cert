@@ -1,0 +1,64 @@
+{
+  "@context": [
+    "https://www.w3.org/ns/credentials/v2",
+    "https://purl.imsglobal.org/spec/ob/v3p0/context-3.0.3.json"
+  ],
+  "id": "https://gentropic.org/cert/achievements/PB-301.json",
+  "type": [
+    "Achievement"
+  ],
+  "name": "Patchbay 301 — Flow Workshop",
+  "description": "Visual dataflow programming concepts and paradigms; Node-based pipeline design, wiring, and execution; API orchestration with HTTP and transformation nodes; Conditional logic and data routing; Sub-graph composition and reusable custom nodes; Full Telegram bot built entirely without code",
+  "criteria": {
+    "narrative": "Attend the full 8-hour Patchbay 301 — Flow Workshop and complete the in-workshop exercises. Completion is verified via a workshop-session hash."
+  },
+  "creditsAvailable": 8,
+  "inLanguage": "en",
+  "tag": [
+    "workflow",
+    "automation",
+    "no-code",
+    "visual-programming",
+    "orchestration",
+    "telegram"
+  ],
+  "alignment": [
+    {
+      "type": [
+        "Alignment"
+      ],
+      "targetFramework": "ESCO",
+      "targetCode": "7d10fcb2-b368-48ab-996b-7c9fafcf68ed",
+      "targetName": "use automatic programming",
+      "targetUrl": "http://data.europa.eu/esco/skill/7d10fcb2-b368-48ab-996b-7c9fafcf68ed"
+    },
+    {
+      "type": [
+        "Alignment"
+      ],
+      "targetFramework": "O*NET",
+      "targetCode": "15-1252.00",
+      "targetName": "Software Developers",
+      "targetUrl": "https://www.onetonline.org/link/summary/15-1252.00"
+    },
+    {
+      "type": [
+        "Alignment"
+      ],
+      "targetFramework": "ESCO",
+      "targetCode": "7add3681-17b6-4027-8a9d-ee92d2b96a42",
+      "targetName": "manage workflow processes",
+      "targetUrl": "http://data.europa.eu/esco/skill/7add3681-17b6-4027-8a9d-ee92d2b96a42"
+    },
+    {
+      "type": [
+        "Alignment"
+      ],
+      "targetFramework": "O*NET",
+      "targetCode": "15-1251.00",
+      "targetName": "Computer Programmers",
+      "targetUrl": "https://www.onetonline.org/link/summary/15-1251.00"
+    }
+  ],
+  "@note_cpd": "Workshops may be eligible for Continuing Professional Development (CPD) hours under relevant professional society frameworks (e.g., AusIMM Category 1 — Formal Learning) subject to member self-assessment and society audit."
+}

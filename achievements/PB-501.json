@@ -1,0 +1,65 @@
+{
+  "@context": [
+    "https://www.w3.org/ns/credentials/v2",
+    "https://purl.imsglobal.org/spec/ob/v3p0/context-3.0.3.json"
+  ],
+  "id": "https://gentropic.org/cert/achievements/PB-501.json",
+  "type": [
+    "Achievement"
+  ],
+  "name": "Patchbay 501 — NaNoGEon",
+  "description": "AI-powered serialized fiction pipeline architecture; Trope-driven story bible and beat sheet generation; Prompt engineering for commercial prose output; Cover illustration generation and text compositing; EPUB, DOCX, and web reader export formats; Media literacy and content factory ethics",
+  "criteria": {
+    "narrative": "Attend the full 8-hour Patchbay 501 — NaNoGEon and complete the in-workshop exercises. Completion is verified via a workshop-session hash."
+  },
+  "creditsAvailable": 8,
+  "inLanguage": "en",
+  "tag": [
+    "ai",
+    "fiction",
+    "writing",
+    "prose",
+    "publishing",
+    "prompt-engineering",
+    "epub"
+  ],
+  "alignment": [
+    {
+      "type": [
+        "Alignment"
+      ],
+      "targetFramework": "ESCO",
+      "targetCode": "ce592b28-4467-4908-b2e6-64bbe18da631",
+      "targetName": "perform copywriting",
+      "targetUrl": "http://data.europa.eu/esco/skill/ce592b28-4467-4908-b2e6-64bbe18da631"
+    },
+    {
+      "type": [
+        "Alignment"
+      ],
+      "targetFramework": "O*NET",
+      "targetCode": "27-3043.00",
+      "targetName": "Writers and Authors",
+      "targetUrl": "https://www.onetonline.org/link/summary/27-3043.00"
+    },
+    {
+      "type": [
+        "Alignment"
+      ],
+      "targetFramework": "ESCO",
+      "targetCode": "8c4c49d4-9708-433f-8ca7-bf2c5211ee49",
+      "targetName": "develop creative ideas",
+      "targetUrl": "http://data.europa.eu/esco/skill/8c4c49d4-9708-433f-8ca7-bf2c5211ee49"
+    },
+    {
+      "type": [
+        "Alignment"
+      ],
+      "targetFramework": "O*NET",
+      "targetCode": "27-3042.00",
+      "targetName": "Technical Writers",
+      "targetUrl": "https://www.onetonline.org/link/summary/27-3042.00"
+    }
+  ],
+  "@note_cpd": "Workshops may be eligible for Continuing Professional Development (CPD) hours under relevant professional society frameworks (e.g., AusIMM Category 1 — Formal Learning) subject to member self-assessment and society audit."
+}

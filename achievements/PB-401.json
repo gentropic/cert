@@ -1,0 +1,65 @@
+{
+  "@context": [
+    "https://www.w3.org/ns/credentials/v2",
+    "https://purl.imsglobal.org/spec/ob/v3p0/context-3.0.3.json"
+  ],
+  "id": "https://gentropic.org/cert/achievements/PB-401.json",
+  "type": [
+    "Achievement"
+  ],
+  "name": "Patchbay 401 — Agent Workshop",
+  "description": "LLM-powered agent architecture and design patterns; The ReAct loop: think, act, observe, reply; Tool use and dynamic skill creation; Memory systems and persistent context; Multi-provider routing and model selection; Scheduling, logging, and autonomous operation",
+  "criteria": {
+    "narrative": "Attend the full 10-hour Patchbay 401 — Agent Workshop and complete the in-workshop exercises. Completion is verified via a workshop-session hash."
+  },
+  "creditsAvailable": 10,
+  "inLanguage": "en",
+  "tag": [
+    "ai",
+    "llm",
+    "agent",
+    "react",
+    "tool-use",
+    "autonomous",
+    "machine-learning"
+  ],
+  "alignment": [
+    {
+      "type": [
+        "Alignment"
+      ],
+      "targetFramework": "ESCO",
+      "targetCode": "e465a154-93f7-4973-9ce1-31659fe16dd2",
+      "targetName": "principles of artificial intelligence",
+      "targetUrl": "http://data.europa.eu/esco/skill/e465a154-93f7-4973-9ce1-31659fe16dd2"
+    },
+    {
+      "type": [
+        "Alignment"
+      ],
+      "targetFramework": "O*NET",
+      "targetCode": "15-1221.00",
+      "targetName": "Computer and Information Research Scientists",
+      "targetUrl": "https://www.onetonline.org/link/summary/15-1221.00"
+    },
+    {
+      "type": [
+        "Alignment"
+      ],
+      "targetFramework": "ESCO",
+      "targetCode": "8369c2d6-c100-4cf6-bd83-9668d8678433",
+      "targetName": "utilise machine learning",
+      "targetUrl": "http://data.europa.eu/esco/skill/8369c2d6-c100-4cf6-bd83-9668d8678433"
+    },
+    {
+      "type": [
+        "Alignment"
+      ],
+      "targetFramework": "O*NET",
+      "targetCode": "15-2051.00",
+      "targetName": "Data Scientists",
+      "targetUrl": "https://www.onetonline.org/link/summary/15-2051.00"
+    }
+  ],
+  "@note_cpd": "Workshops may be eligible for Continuing Professional Development (CPD) hours under relevant professional society frameworks (e.g., AusIMM Category 1 — Formal Learning) subject to member self-assessment and society audit."
+}

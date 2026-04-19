@@ -1,0 +1,65 @@
+{
+  "@context": [
+    "https://www.w3.org/ns/credentials/v2",
+    "https://purl.imsglobal.org/spec/ob/v3p0/context-3.0.3.json"
+  ],
+  "id": "https://gentropic.org/cert/achievements/PB-101.json",
+  "type": [
+    "Achievement"
+  ],
+  "name": "Patchbay 101 — API Workshop",
+  "description": "HTTP methods, status codes, and request/response anatomy; JSON parsing and structured data extraction; REST API consumption with query parameters and headers; Building and debugging requests with fetch(); Integrating live API data into a web page",
+  "criteria": {
+    "narrative": "Attend the full 3-hour Patchbay 101 — API Workshop and complete the in-workshop exercises. Completion is verified via a workshop-session hash."
+  },
+  "creditsAvailable": 3,
+  "inLanguage": "en",
+  "tag": [
+    "api",
+    "http",
+    "rest",
+    "json",
+    "fetch",
+    "javascript",
+    "web"
+  ],
+  "alignment": [
+    {
+      "type": [
+        "Alignment"
+      ],
+      "targetFramework": "ESCO",
+      "targetCode": "b0096dc5-2e2d-4bc1-8172-05bf486c3968",
+      "targetName": "design application interfaces",
+      "targetUrl": "http://data.europa.eu/esco/skill/b0096dc5-2e2d-4bc1-8172-05bf486c3968"
+    },
+    {
+      "type": [
+        "Alignment"
+      ],
+      "targetFramework": "O*NET",
+      "targetCode": "15-1254.00",
+      "targetName": "Web Developers",
+      "targetUrl": "https://www.onetonline.org/link/summary/15-1254.00"
+    },
+    {
+      "type": [
+        "Alignment"
+      ],
+      "targetFramework": "ESCO",
+      "targetCode": "21d2f96d-35f7-4e3f-9745-c533d2dd6e97",
+      "targetName": "computer programming",
+      "targetUrl": "http://data.europa.eu/esco/skill/21d2f96d-35f7-4e3f-9745-c533d2dd6e97"
+    },
+    {
+      "type": [
+        "Alignment"
+      ],
+      "targetFramework": "O*NET",
+      "targetCode": "15-1252.00",
+      "targetName": "Software Developers",
+      "targetUrl": "https://www.onetonline.org/link/summary/15-1252.00"
+    }
+  ],
+  "@note_cpd": "Workshops may be eligible for Continuing Professional Development (CPD) hours under relevant professional society frameworks (e.g., AusIMM Category 1 — Formal Learning) subject to member self-assessment and society audit."
+}

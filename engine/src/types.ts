@@ -7,19 +7,49 @@ export interface IssuanceInput {
 }
 
 export interface Alignment {
+  type?: string[];
   targetFramework: string;
   targetCode: string;
   targetName: string;
   targetUrl: string;
 }
 
+// Flat per-locale view consumed by the signing pipeline.
 export interface CourseEntry {
   name: string;
   description: string;
   hours: number;
   tags?: string[];
   alignment?: Alignment[];
-  language?: string;
+  language: string;
+  series?: string;
+}
+
+// Authoring format of the top-level courses.json (nested, multi-locale).
+export interface CoursesDocument {
+  series: Record<string, SeriesEntry>;
+  courses: Record<string, RichCourse>;
+}
+
+export interface SeriesEntry {
+  name: string;
+  org: string;
+  issuer: string;
+  issuerTitle: Record<string, string>;
+  layout: string;
+  pageAccent: string;
+  pageBg: string;
+}
+
+export interface RichCourse {
+  series: string;
+  title: Record<string, string>;
+  desc: Record<string, string[]>;
+  hours: number;
+  color?: string;
+  layout?: string;
+  tags?: string[];
+  alignment?: Alignment[];
 }
 
 export interface EngineConfig {

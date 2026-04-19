@@ -1,0 +1,65 @@
+{
+  "@context": [
+    "https://www.w3.org/ns/credentials/v2",
+    "https://purl.imsglobal.org/spec/ob/v3p0/context-3.0.3.json"
+  ],
+  "id": "https://gentropic.org/cert/achievements/BM-301.json",
+  "type": [
+    "Achievement"
+  ],
+  "name": "BM-301 — Decision Trees for Mining and Modelling",
+  "description": "CART decision tree fundamentals: splits, leaves, and impurity measures; Interactive tree visualization and node inspection; Bonsai tools: manual pruning, force splitting, and tree reshaping; Export to Python, SQL, Excel, CSV, and Leapfrog .lfcalc; Importing and auditing existing SQL classification rules; Gini impurity, variance, and R² for model evaluation",
+  "criteria": {
+    "narrative": "Attend the full 3-hour BM-301 — Decision Trees for Mining and Modelling and complete the in-workshop exercises. Completion is verified via a workshop-session hash."
+  },
+  "creditsAvailable": 3,
+  "inLanguage": "en",
+  "tag": [
+    "decision-trees",
+    "cart",
+    "machine-learning",
+    "mining",
+    "geology",
+    "python",
+    "sql"
+  ],
+  "alignment": [
+    {
+      "type": [
+        "Alignment"
+      ],
+      "targetFramework": "ESCO",
+      "targetCode": "25f0ea33-b4a2-4f31-b7b4-7d20e827b180",
+      "targetName": "data mining",
+      "targetUrl": "http://data.europa.eu/esco/skill/25f0ea33-b4a2-4f31-b7b4-7d20e827b180"
+    },
+    {
+      "type": [
+        "Alignment"
+      ],
+      "targetFramework": "O*NET",
+      "targetCode": "15-2051.00",
+      "targetName": "Data Scientists",
+      "targetUrl": "https://www.onetonline.org/link/summary/15-2051.00"
+    },
+    {
+      "type": [
+        "Alignment"
+      ],
+      "targetFramework": "ESCO",
+      "targetCode": "992c2fe8-13da-4f48-8c83-ce13b4b80468",
+      "targetName": "evaluate mineral resources",
+      "targetUrl": "http://data.europa.eu/esco/skill/992c2fe8-13da-4f48-8c83-ce13b4b80468"
+    },
+    {
+      "type": [
+        "Alignment"
+      ],
+      "targetFramework": "O*NET",
+      "targetCode": "17-2151.00",
+      "targetName": "Mining and Geological Engineers",
+      "targetUrl": "https://www.onetonline.org/link/summary/17-2151.00"
+    }
+  ],
+  "@note_cpd": "Workshops may be eligible for Continuing Professional Development (CPD) hours under relevant professional society frameworks (e.g., AusIMM Category 1 — Formal Learning) subject to member self-assessment and society audit."
+}

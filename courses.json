@@ -1,0 +1,375 @@
+{
+  "series": {
+    "patchbay": {
+      "name": "Patchbay",
+      "org": "Geoscientific Chaos Union",
+      "issuer": "Arthur Endlein",
+      "issuerTitle": {
+        "en": "Instructor — Patchbay Series",
+        "pt": "Instrutor — Série Patchbay"
+      },
+      "layout": "topo",
+      "pageAccent": "#d4a017",
+      "pageBg": "cables"
+    },
+    "bm": {
+      "name": "Blocks for Modelling",
+      "org": "Geoscientific Chaos Union",
+      "issuer": "Arthur Endlein",
+      "issuerTitle": {
+        "en": "Instructor — BM Series",
+        "pt": "Instrutor — Série BM"
+      },
+      "layout": "blocks",
+      "pageAccent": "#4caf50",
+      "pageBg": "blocks"
+    }
+  },
+  "courses": {
+    "PB-101": {
+      "series": "patchbay",
+      "title": {
+        "en": "Patchbay 101 — API Workshop",
+        "pt": "Patchbay 101 — Workshop de APIs"
+      },
+      "desc": {
+        "en": [
+          "HTTP methods, status codes, and request/response anatomy",
+          "JSON parsing and structured data extraction",
+          "REST API consumption with query parameters and headers",
+          "Building and debugging requests with fetch()",
+          "Integrating live API data into a web page"
+        ],
+        "pt": [
+          "Métodos HTTP, códigos de status e anatomia de requisição/resposta",
+          "Análise de JSON e extração de dados estruturados",
+          "Consumo de APIs REST com parâmetros de consulta e cabeçalhos",
+          "Construção e depuração de requisições com fetch()",
+          "Integração de dados de API em tempo real numa página web"
+        ]
+      },
+      "hours": 3,
+      "color": "#d4a017",
+      "tags": ["api", "http", "rest", "json", "fetch", "javascript", "web"],
+      "alignment": [
+        {
+          "type": ["Alignment"],
+          "targetFramework": "ESCO",
+          "targetCode": "b0096dc5-2e2d-4bc1-8172-05bf486c3968",
+          "targetName": "design application interfaces",
+          "targetUrl": "http://data.europa.eu/esco/skill/b0096dc5-2e2d-4bc1-8172-05bf486c3968"
+        },
+        {
+          "type": ["Alignment"],
+          "targetFramework": "O*NET",
+          "targetCode": "15-1254.00",
+          "targetName": "Web Developers",
+          "targetUrl": "https://www.onetonline.org/link/summary/15-1254.00"
+        },
+        {
+          "type": ["Alignment"],
+          "targetFramework": "ESCO",
+          "targetCode": "21d2f96d-35f7-4e3f-9745-c533d2dd6e97",
+          "targetName": "computer programming",
+          "targetUrl": "http://data.europa.eu/esco/skill/21d2f96d-35f7-4e3f-9745-c533d2dd6e97"
+        },
+        {
+          "type": ["Alignment"],
+          "targetFramework": "O*NET",
+          "targetCode": "15-1252.00",
+          "targetName": "Software Developers",
+          "targetUrl": "https://www.onetonline.org/link/summary/15-1252.00"
+        }
+      ]
+    },
+    "PB-201": {
+      "series": "patchbay",
+      "title": {
+        "en": "Patchbay 201 — Bot Workshop",
+        "pt": "Patchbay 201 — Workshop de Bot"
+      },
+      "desc": {
+        "en": [
+          "Telegram Bot API and bot registration with BotFather",
+          "Polling architecture and the message loop",
+          "Command parsing, routing, and response handling",
+          "External API integration from bot context",
+          "State management and interactive conversation flow"
+        ],
+        "pt": [
+          "API de Bot do Telegram e registro com BotFather",
+          "Arquitetura de polling e o loop de mensagens",
+          "Análise de comandos, roteamento e tratamento de respostas",
+          "Integração com APIs externas a partir do contexto do bot",
+          "Gerenciamento de estado e fluxo de conversação interativa"
+        ]
+      },
+      "hours": 4,
+      "color": "#3ec9d1",
+      "tags": ["bot", "telegram", "api", "polling", "javascript"],
+      "alignment": [
+        {
+          "type": ["Alignment"],
+          "targetFramework": "ESCO",
+          "targetCode": "21d2f96d-35f7-4e3f-9745-c533d2dd6e97",
+          "targetName": "computer programming",
+          "targetUrl": "http://data.europa.eu/esco/skill/21d2f96d-35f7-4e3f-9745-c533d2dd6e97"
+        },
+        {
+          "type": ["Alignment"],
+          "targetFramework": "O*NET",
+          "targetCode": "15-1251.00",
+          "targetName": "Computer Programmers",
+          "targetUrl": "https://www.onetonline.org/link/summary/15-1251.00"
+        },
+        {
+          "type": ["Alignment"],
+          "targetFramework": "ESCO",
+          "targetCode": "b0096dc5-2e2d-4bc1-8172-05bf486c3968",
+          "targetName": "design application interfaces",
+          "targetUrl": "http://data.europa.eu/esco/skill/b0096dc5-2e2d-4bc1-8172-05bf486c3968"
+        },
+        {
+          "type": ["Alignment"],
+          "targetFramework": "O*NET",
+          "targetCode": "15-1254.00",
+          "targetName": "Web Developers",
+          "targetUrl": "https://www.onetonline.org/link/summary/15-1254.00"
+        }
+      ]
+    },
+    "PB-301": {
+      "series": "patchbay",
+      "title": {
+        "en": "Patchbay 301 — Flow Workshop",
+        "pt": "Patchbay 301 — Workshop de Fluxo"
+      },
+      "desc": {
+        "en": [
+          "Visual dataflow programming concepts and paradigms",
+          "Node-based pipeline design, wiring, and execution",
+          "API orchestration with HTTP and transformation nodes",
+          "Conditional logic and data routing",
+          "Sub-graph composition and reusable custom nodes",
+          "Full Telegram bot built entirely without code"
+        ],
+        "pt": [
+          "Conceitos e paradigmas de programação visual de fluxo de dados",
+          "Design de pipelines baseado em nós, conexões e execução",
+          "Orquestração de APIs com nós HTTP e de transformação",
+          "Lógica condicional e roteamento de dados",
+          "Composição de sub-grafos e nós customizados reutilizáveis",
+          "Bot completo do Telegram construído inteiramente sem código"
+        ]
+      },
+      "hours": 8,
+      "color": "#6abf69",
+      "tags": ["workflow", "automation", "no-code", "visual-programming", "orchestration", "telegram"],
+      "alignment": [
+        {
+          "type": ["Alignment"],
+          "targetFramework": "ESCO",
+          "targetCode": "7d10fcb2-b368-48ab-996b-7c9fafcf68ed",
+          "targetName": "use automatic programming",
+          "targetUrl": "http://data.europa.eu/esco/skill/7d10fcb2-b368-48ab-996b-7c9fafcf68ed"
+        },
+        {
+          "type": ["Alignment"],
+          "targetFramework": "O*NET",
+          "targetCode": "15-1252.00",
+          "targetName": "Software Developers",
+          "targetUrl": "https://www.onetonline.org/link/summary/15-1252.00"
+        },
+        {
+          "type": ["Alignment"],
+          "targetFramework": "ESCO",
+          "targetCode": "7add3681-17b6-4027-8a9d-ee92d2b96a42",
+          "targetName": "manage workflow processes",
+          "targetUrl": "http://data.europa.eu/esco/skill/7add3681-17b6-4027-8a9d-ee92d2b96a42"
+        },
+        {
+          "type": ["Alignment"],
+          "targetFramework": "O*NET",
+          "targetCode": "15-1251.00",
+          "targetName": "Computer Programmers",
+          "targetUrl": "https://www.onetonline.org/link/summary/15-1251.00"
+        }
+      ]
+    },
+    "PB-401": {
+      "series": "patchbay",
+      "title": {
+        "en": "Patchbay 401 — Agent Workshop",
+        "pt": "Patchbay 401 — Workshop de Agente"
+      },
+      "desc": {
+        "en": [
+          "LLM-powered agent architecture and design patterns",
+          "The ReAct loop: think, act, observe, reply",
+          "Tool use and dynamic skill creation",
+          "Memory systems and persistent context",
+          "Multi-provider routing and model selection",
+          "Scheduling, logging, and autonomous operation"
+        ],
+        "pt": [
+          "Arquitetura de agentes com LLM e padrões de design",
+          "O ciclo ReAct: pensar, agir, observar, responder",
+          "Uso de ferramentas e criação dinâmica de habilidades",
+          "Sistemas de memória e contexto persistente",
+          "Roteamento multi-provedor e seleção de modelo",
+          "Agendamento, registro e operação autônoma"
+        ]
+      },
+      "hours": 10,
+      "color": "#a78bfa",
+      "tags": ["ai", "llm", "agent", "react", "tool-use", "autonomous", "machine-learning"],
+      "alignment": [
+        {
+          "type": ["Alignment"],
+          "targetFramework": "ESCO",
+          "targetCode": "e465a154-93f7-4973-9ce1-31659fe16dd2",
+          "targetName": "principles of artificial intelligence",
+          "targetUrl": "http://data.europa.eu/esco/skill/e465a154-93f7-4973-9ce1-31659fe16dd2"
+        },
+        {
+          "type": ["Alignment"],
+          "targetFramework": "O*NET",
+          "targetCode": "15-1221.00",
+          "targetName": "Computer and Information Research Scientists",
+          "targetUrl": "https://www.onetonline.org/link/summary/15-1221.00"
+        },
+        {
+          "type": ["Alignment"],
+          "targetFramework": "ESCO",
+          "targetCode": "8369c2d6-c100-4cf6-bd83-9668d8678433",
+          "targetName": "utilise machine learning",
+          "targetUrl": "http://data.europa.eu/esco/skill/8369c2d6-c100-4cf6-bd83-9668d8678433"
+        },
+        {
+          "type": ["Alignment"],
+          "targetFramework": "O*NET",
+          "targetCode": "15-2051.00",
+          "targetName": "Data Scientists",
+          "targetUrl": "https://www.onetonline.org/link/summary/15-2051.00"
+        }
+      ]
+    },
+    "PB-501": {
+      "series": "patchbay",
+      "layout": "skulls",
+      "title": {
+        "en": "Patchbay 501 — NaNoGEon",
+        "pt": "Patchbay 501 — NaNoGEon"
+      },
+      "desc": {
+        "en": [
+          "AI-powered serialized fiction pipeline architecture",
+          "Trope-driven story bible and beat sheet generation",
+          "Prompt engineering for commercial prose output",
+          "Cover illustration generation and text compositing",
+          "EPUB, DOCX, and web reader export formats",
+          "Media literacy and content factory ethics"
+        ],
+        "pt": [
+          "Arquitetura de pipeline de ficção serializada com IA",
+          "Geração de bíblia e roteiro a partir de tropos",
+          "Engenharia de prompts para prosa comercial",
+          "Geração de ilustrações de capa e composição de texto",
+          "Formatos de exportação EPUB, DOCX e leitor web",
+          "Letramento midiático e ética de fábricas de conteúdo"
+        ]
+      },
+      "hours": 8,
+      "color": "#d4a017",
+      "tags": ["ai", "fiction", "writing", "prose", "publishing", "prompt-engineering", "epub"],
+      "alignment": [
+        {
+          "type": ["Alignment"],
+          "targetFramework": "ESCO",
+          "targetCode": "ce592b28-4467-4908-b2e6-64bbe18da631",
+          "targetName": "perform copywriting",
+          "targetUrl": "http://data.europa.eu/esco/skill/ce592b28-4467-4908-b2e6-64bbe18da631"
+        },
+        {
+          "type": ["Alignment"],
+          "targetFramework": "O*NET",
+          "targetCode": "27-3043.00",
+          "targetName": "Writers and Authors",
+          "targetUrl": "https://www.onetonline.org/link/summary/27-3043.00"
+        },
+        {
+          "type": ["Alignment"],
+          "targetFramework": "ESCO",
+          "targetCode": "8c4c49d4-9708-433f-8ca7-bf2c5211ee49",
+          "targetName": "develop creative ideas",
+          "targetUrl": "http://data.europa.eu/esco/skill/8c4c49d4-9708-433f-8ca7-bf2c5211ee49"
+        },
+        {
+          "type": ["Alignment"],
+          "targetFramework": "O*NET",
+          "targetCode": "27-3042.00",
+          "targetName": "Technical Writers",
+          "targetUrl": "https://www.onetonline.org/link/summary/27-3042.00"
+        }
+      ]
+    },
+    "BM-301": {
+      "series": "bm",
+      "title": {
+        "en": "BM-301 — Decision Trees for Mining and Modelling",
+        "pt": "BM-301 — Árvores de Decisão para Mineração e Modelagem"
+      },
+      "desc": {
+        "en": [
+          "CART decision tree fundamentals: splits, leaves, and impurity measures",
+          "Interactive tree visualization and node inspection",
+          "Bonsai tools: manual pruning, force splitting, and tree reshaping",
+          "Export to Python, SQL, Excel, CSV, and Leapfrog .lfcalc",
+          "Importing and auditing existing SQL classification rules",
+          "Gini impurity, variance, and R² for model evaluation"
+        ],
+        "pt": [
+          "Fundamentos de árvores de decisão CART: divisões, folhas e medidas de impureza",
+          "Visualização interativa de árvores e inspeção de nós",
+          "Ferramentas bonsai: poda manual, divisão forçada e remodelagem de árvores",
+          "Exportação para Python, SQL, Excel, CSV e Leapfrog .lfcalc",
+          "Importação e auditoria de regras de classificação SQL existentes",
+          "Impureza de Gini, variância e R² para avaliação de modelos"
+        ]
+      },
+      "hours": 3,
+      "color": "#4caf50",
+      "tags": ["decision-trees", "cart", "machine-learning", "mining", "geology", "python", "sql"],
+      "alignment": [
+        {
+          "type": ["Alignment"],
+          "targetFramework": "ESCO",
+          "targetCode": "25f0ea33-b4a2-4f31-b7b4-7d20e827b180",
+          "targetName": "data mining",
+          "targetUrl": "http://data.europa.eu/esco/skill/25f0ea33-b4a2-4f31-b7b4-7d20e827b180"
+        },
+        {
+          "type": ["Alignment"],
+          "targetFramework": "O*NET",
+          "targetCode": "15-2051.00",
+          "targetName": "Data Scientists",
+          "targetUrl": "https://www.onetonline.org/link/summary/15-2051.00"
+        },
+        {
+          "type": ["Alignment"],
+          "targetFramework": "ESCO",
+          "targetCode": "992c2fe8-13da-4f48-8c83-ce13b4b80468",
+          "targetName": "evaluate mineral resources",
+          "targetUrl": "http://data.europa.eu/esco/skill/992c2fe8-13da-4f48-8c83-ce13b4b80468"
+        },
+        {
+          "type": ["Alignment"],
+          "targetFramework": "O*NET",
+          "targetCode": "17-2151.00",
+          "targetName": "Mining and Geological Engineers",
+          "targetUrl": "https://www.onetonline.org/link/summary/17-2151.00"
+        }
+      ]
+    }
+  }
+}
