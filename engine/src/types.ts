@@ -64,6 +64,15 @@ export interface LedgerConfig {
   tipPath?: string;
 }
 
+// deno-lint-ignore no-explicit-any
+export type CosignRunner = (args: string[]) => Promise<{ success: boolean; stderr: string }>;
+
+export interface RekorConfig {
+  cosignPath?: string;
+  // Inject a fake runner for tests; omitted in production.
+  runner?: CosignRunner;
+}
+
 export interface EngineConfig {
   baseUrl: string;
   issuerId: string;
@@ -76,6 +85,7 @@ export interface EngineConfig {
   pinnedDocuments?: Record<string, unknown>;
   statusList?: StatusListConfig;
   ledger?: LedgerConfig;
+  rekor?: RekorConfig;
 }
 
 export interface IssuanceResult {
@@ -86,6 +96,11 @@ export interface IssuanceResult {
   endorsementHash: string;
   statusIndex?: number;
   ledgerIndex?: number;
+  rekorBundlePaths?: {
+    credential: string;
+    endorsement: string;
+    ledgerTip?: string;
+  };
 }
 
 export interface Signer {

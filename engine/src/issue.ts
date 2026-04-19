@@ -9,6 +9,7 @@ import type { EngineConfig, IssuanceInput, IssuanceResult, StatusListConfig } fr
 import { loadSigner } from "./keys.ts";
 import { createDocumentLoader } from "./contexts.ts";
 import { appendEntry } from "./ledger.ts";
+import { logBlob } from "./rekor.ts";
 
 async function assignStatusIndex(cfg: StatusListConfig): Promise<number> {
   let current = 0;
@@ -165,6 +166,36 @@ export async function signAndPublish(
     ledgerIndex = entry.i;
   }
 
+  let rekorBundlePaths: IssuanceResult["rekorBundlePaths"];
+  if (config.rekor) {
+    const credBundle = `${config.repoRoot}/credentials/${code}.rekor.bundle`;
+    const endoBundle = `${config.repoRoot}/endorsements/${code}.rekor.bundle`;
+    await logBlob({
+      subjectPath: credentialPath,
+      bundlePath: credBundle,
+      cosignPath: config.rekor.cosignPath,
+      runner: config.rekor.runner,
+    });
+    await logBlob({
+      subjectPath: endorsementPath,
+      bundlePath: endoBundle,
+      cosignPath: config.rekor.cosignPath,
+      runner: config.rekor.runner,
+    });
+    rekorBundlePaths = { credential: credBundle, endorsement: endoBundle };
+
+    if (config.ledger?.tipPath) {
+      const tipBundle = `${config.ledger.tipPath}.rekor.bundle`;
+      await logBlob({
+        subjectPath: config.ledger.tipPath,
+        bundlePath: tipBundle,
+        cosignPath: config.rekor.cosignPath,
+        runner: config.rekor.runner,
+      });
+      rekorBundlePaths.ledgerTip = tipBundle;
+    }
+  }
+
   return {
     code,
     credentialPath,
@@ -173,5 +204,6 @@ export async function signAndPublish(
     endorsementHash,
     statusIndex,
     ledgerIndex,
+    rekorBundlePaths,
   };
 }
