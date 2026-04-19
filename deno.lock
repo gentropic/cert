@@ -153,6 +153,16 @@
       "npm:@digitalbazaar/ed25519-multikey@^1.3.1",
       "npm:@digitalbazaar/eddsa-rdfc-2022-cryptosuite@^1.1.0",
       "npm:@digitalbazaar/vc@^7.1.2"
-    ]
+    ],
+    "members": {
+      "engine": {
+        "dependencies": [
+          "npm:@digitalbazaar/data-integrity@^2.5.0",
+          "npm:@digitalbazaar/ed25519-multikey@^1.3.1",
+          "npm:@digitalbazaar/eddsa-rdfc-2022-cryptosuite@^1.1.0",
+          "npm:@digitalbazaar/vc@^7.1.2"
+        ]
+      }
+    }
   }
 }

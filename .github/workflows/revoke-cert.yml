@@ -1,0 +1,41 @@
+name: Revoke credential
+on:
+  workflow_dispatch:
+    inputs:
+      code:
+        description: Credential code to revoke (e.g. PB-101-EF47)
+        type: string
+        required: true
+      reason:
+        description: Revocation reason (logged to status/revocations.jsonl)
+        type: string
+        required: true
+
+jobs:
+  revoke:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+      - name: Revoke
+        env:
+          GCU_ISSUER_SIGNING_KEY: ${{ secrets.GCU_ISSUER_SIGNING_KEY }}
+        run: |
+          deno run --allow-read --allow-write --allow-env \
+            scripts/revoke.ts "${{ inputs.code }}" --reason "${{ inputs.reason }}"
+      - name: Commit
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add status/list-1.json status/revocations.jsonl
+          git commit -m "Revoke ${{ inputs.code }}: ${{ inputs.reason }}
+
+          Status bit flipped for credential ${{ inputs.code }}.
+          Reason: ${{ inputs.reason }}"
+          git push

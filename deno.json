@@ -1,0 +1,18 @@
+{
+  "workspace": ["./engine"],
+  "tasks": {
+    "build-achievements": "deno run --allow-read --allow-write scripts/build-achievements.ts",
+    "init-status-list": "deno run --allow-read --allow-write --allow-env scripts/init-status-list.ts",
+    "revoke": "deno run --allow-read --allow-write --allow-env scripts/revoke.ts"
+  },
+  "imports": {
+    "@digitalbazaar/vc": "npm:@digitalbazaar/vc@^7.1.2",
+    "@digitalbazaar/data-integrity": "npm:@digitalbazaar/data-integrity@^2.5.0",
+    "@digitalbazaar/eddsa-rdfc-2022-cryptosuite": "npm:@digitalbazaar/eddsa-rdfc-2022-cryptosuite@^1.1.0",
+    "@digitalbazaar/ed25519-multikey": "npm:@digitalbazaar/ed25519-multikey@^1.3.1"
+  },
+  "compilerOptions": {
+    "strict": true,
+    "lib": ["deno.ns", "dom"]
+  }
+}

@@ -5,9 +5,25 @@ import { DataIntegrityProof } from "@digitalbazaar/data-integrity";
 // @ts-ignore — no bundled types
 import { cryptosuite as eddsaRdfc2022CryptoSuite } from "@digitalbazaar/eddsa-rdfc-2022-cryptosuite";
 
-import type { EngineConfig, IssuanceInput, IssuanceResult } from "./types.ts";
+import type { EngineConfig, IssuanceInput, IssuanceResult, StatusListConfig } from "./types.ts";
 import { loadSigner } from "./keys.ts";
 import { createDocumentLoader } from "./contexts.ts";
+
+async function assignStatusIndex(cfg: StatusListConfig): Promise<number> {
+  let current = 0;
+  try {
+    const text = await Deno.readTextFile(cfg.nextIndexPath);
+    const parsed = Number.parseInt(text.trim(), 10);
+    if (!Number.isFinite(parsed) || parsed < 0) {
+      throw new Error(`Invalid .next-index contents: ${text.slice(0, 40)}`);
+    }
+    current = parsed;
+  } catch (e) {
+    if (!(e instanceof Deno.errors.NotFound)) throw e;
+  }
+  await Deno.writeTextFile(cfg.nextIndexPath, `${current + 1}\n`);
+  return current;
+}
 
 async function sha256Hex(text: string): Promise<string> {
   const utf8 = new TextEncoder().encode(text);
@@ -58,7 +74,20 @@ export async function signAndPublish(
 
   const validFromIso = input.date.includes("T") ? input.date : `${input.date}T00:00:00Z`;
 
-  const unsignedCredential = {
+  let statusIndex: number | undefined;
+  let credentialStatus: Record<string, unknown> | undefined;
+  if (config.statusList) {
+    statusIndex = await assignStatusIndex(config.statusList);
+    credentialStatus = {
+      id: `${config.statusList.publicUrl}#${statusIndex}`,
+      type: "BitstringStatusListEntry",
+      statusPurpose: "revocation",
+      statusListIndex: String(statusIndex),
+      statusListCredential: config.statusList.publicUrl,
+    };
+  }
+
+  const unsignedCredential: Record<string, unknown> = {
     "@context": [
       "https://www.w3.org/ns/credentials/v2",
       "https://purl.imsglobal.org/spec/ob/v3p0/context-3.0.3.json",
@@ -77,6 +106,7 @@ export async function signAndPublish(
         type: ["Achievement"],
       },
     },
+    ...(credentialStatus ? { credentialStatus } : {}),
   };
 
   const signedCredential = await vc.issue({
@@ -124,5 +154,6 @@ export async function signAndPublish(
     endorsementPath,
     credentialHash: await sha256Hex(credentialJson),
     endorsementHash: await sha256Hex(endorsementJson),
+    statusIndex,
   };
 }

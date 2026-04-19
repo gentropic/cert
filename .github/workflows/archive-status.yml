@@ -1,0 +1,22 @@
+name: Archive status list to Internet Archive
+# Monthly pin so the signed status list (and issuer docs needed to verify it)
+# remain reachable via web.archive.org even if gentropic.org goes dark.
+on:
+  schedule:
+    - cron: "13 3 1 * *" # 03:13 UTC on the 1st of every month
+  workflow_dispatch:
+
+jobs:
+  archive:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Submit URLs to Internet Archive
+        run: |
+          for url in \
+            "https://gentropic.org/cert/status/list-1.json" \
+            "https://gentropic.org/cert/issuer.json" \
+            "https://gentropic.org/cert/issuer-keys.json" \
+            "https://gentropic.org/.well-known/did.json"; do
+            echo "Archiving $url"
+            curl -sS -X POST "https://web.archive.org/save/$url" || true
+          done

@@ -52,6 +52,13 @@ export interface RichCourse {
   alignment?: Alignment[];
 }
 
+export interface StatusListConfig {
+  // URL the status list is served at (goes into each credential's credentialStatus.statusListCredential).
+  publicUrl: string;
+  // Path to the monotonic next-index counter file on disk.
+  nextIndexPath: string;
+}
+
 export interface EngineConfig {
   baseUrl: string;
   issuerId: string;
@@ -62,6 +69,7 @@ export interface EngineConfig {
   repoRoot: string;
   courses: Record<string, CourseEntry>;
   pinnedDocuments?: Record<string, unknown>;
+  statusList?: StatusListConfig;
 }
 
 export interface IssuanceResult {
@@ -70,6 +78,7 @@ export interface IssuanceResult {
   endorsementPath: string;
   credentialHash: string;
   endorsementHash: string;
+  statusIndex?: number;
 }
 
 export interface Signer {
