@@ -72,14 +72,21 @@ function prettyDate(iso: string): string {
   return `${m} ${day}, ${y}`;
 }
 
+interface QrMatrix {
+  size: number;
+  data: Uint8Array;
+}
+
+function getQrMatrix(text: string): QrMatrix {
+  // qrcode.create returns a QR object with a 1-bit module matrix. We draw
+  // each "on" module as a filled rectangle in pdf-lib — true vector output.
+  // deno-lint-ignore no-explicit-any
+  const qr = (QRCode as any).create(text, { errorCorrectionLevel: "M" });
+  return { size: qr.modules.size, data: qr.modules.data };
+}
+
 export async function renderCertificatePdf(input: CertificateInput): Promise<Uint8Array> {
-  const qrPngDataUrl = await QRCode.toDataURL(input.validatorUrl, {
-    errorCorrectionLevel: "M",
-    margin: 1,
-    scale: 8,
-    color: { dark: "#000000", light: "#ffffff" },
-  });
-  const qrPngBytes = Uint8Array.from(atob(qrPngDataUrl.split(",")[1]), (c) => c.charCodeAt(0));
+  const qr = getQrMatrix(input.validatorUrl);
 
   const pdf = await PDFDocument.create();
   pdf.registerFontkit(fontkit);
@@ -210,15 +217,37 @@ export async function renderCertificatePdf(input: CertificateInput): Promise<Uin
   drawCentered(`Validation code: ${input.credentialCode}`, valY, 11, monoBold, ink);
   drawCentered(`Verify at: ${input.validatorUrl}`, valY - 13, 7, mono, muted);
 
-  // QR centered below the validation block.
-  const qrImage = await pdf.embedPng(qrPngBytes);
-  const qrSize = 96;
-  page.drawImage(qrImage, {
-    x: center - qrSize / 2,
-    y: 40,
-    width: qrSize,
-    height: qrSize,
+  // QR centered below the validation block. Vector-drawn as a grid of filled
+  // rectangles (one per "on" module), so it stays sharp at any zoom and
+  // doesn't require rasterization decisions.
+  const qrBoxSize = 96;
+  const quietModules = 1; // 1-module quiet zone on each side
+  const totalModules = qr.size + quietModules * 2;
+  const moduleSize = qrBoxSize / totalModules;
+  const qrLeft = center - qrBoxSize / 2;
+  const qrBottom = 40;
+  // Opaque white background fills the quiet zone; the "on" modules overdraw.
+  page.drawRectangle({
+    x: qrLeft,
+    y: qrBottom,
+    width: qrBoxSize,
+    height: qrBoxSize,
+    color: rgb(1, 1, 1),
   });
+  for (let row = 0; row < qr.size; row++) {
+    for (let col = 0; col < qr.size; col++) {
+      if (qr.data[row * qr.size + col]) {
+        page.drawRectangle({
+          x: qrLeft + (col + quietModules) * moduleSize,
+          // PDF y-axis grows upward; top of QR is at qrBottom + qrBoxSize.
+          y: qrBottom + qrBoxSize - (row + quietModules + 1) * moduleSize,
+          width: moduleSize,
+          height: moduleSize,
+          color: rgb(0, 0, 0),
+        });
+      }
+    }
+  }
 
   // PDF/A-3 enrichment: ICC output intent, XMP metadata, attachments table.
   // Active when the caller supplies an ICC profile (attachments optional).
