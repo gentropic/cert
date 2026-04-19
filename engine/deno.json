@@ -8,7 +8,10 @@
     "@digitalbazaar/vc": "npm:@digitalbazaar/vc@^7.1.2",
     "@digitalbazaar/data-integrity": "npm:@digitalbazaar/data-integrity@^2.5.0",
     "@digitalbazaar/eddsa-rdfc-2022-cryptosuite": "npm:@digitalbazaar/eddsa-rdfc-2022-cryptosuite@^1.1.0",
-    "@digitalbazaar/ed25519-multikey": "npm:@digitalbazaar/ed25519-multikey@^1.3.1"
+    "@digitalbazaar/ed25519-multikey": "npm:@digitalbazaar/ed25519-multikey@^1.3.1",
+    "pdf-lib": "npm:pdf-lib@^1.17.1",
+    "@pdf-lib/fontkit": "npm:@pdf-lib/fontkit@^1.1.1",
+    "qrcode": "npm:qrcode@^1.5.4"
   },
   "compilerOptions": {
     "strict": true,

@@ -82,6 +82,10 @@ web_modules/
 # Local-only Claude Code guidance; not a tracked repo artifact.
 /CLAUDE.md
 
+# Dev-time sample PDFs produced by `deno task sample-pdf`. Not committed;
+# the real rendered certs live under pdfs/ (produced by the emit-cert action).
+/sample-*.pdf
+
 # parcel-bundler cache (https://parceljs.org/)
 .cache
 .parcel-cache

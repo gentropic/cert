@@ -14,14 +14,27 @@ export async function loadCourses(
     if (!title || !descBullets) {
       throw new Error(`Course ${code}: missing "${locale}" locale in courses.json`);
     }
+    const series = c.series ? doc.series[c.series] : undefined;
     result[code] = {
       name: title,
       description: descBullets.join("; "),
+      descBullets,
       hours: c.hours,
       tags: c.tags,
       alignment: c.alignment,
       language: locale,
       series: c.series,
+      seriesMeta: series
+        ? {
+          name: series.name,
+          accent: series.pageAccent ?? c.color,
+          issuerName: series.issuer,
+          issuerLabel: series.issuerTitle?.[locale],
+          org: series.org,
+        }
+        : c.color
+        ? { accent: c.color }
+        : undefined,
     };
   }
 

@@ -1,7 +1,11 @@
 {
   "TEST-101": {
     "name": "Test Course 101",
-    "description": "A test course exercising the signing pipeline.",
+    "description": "A test course exercising the signing pipeline; with two bullets",
+    "descBullets": [
+      "A test course exercising the signing pipeline",
+      "With two bullets"
+    ],
     "hours": 3,
     "tags": ["test"],
     "language": "en"

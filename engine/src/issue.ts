@@ -10,6 +10,7 @@ import { loadSigner } from "./keys.ts";
 import { createDocumentLoader } from "./contexts.ts";
 import { appendEntry } from "./ledger.ts";
 import { logBlob } from "./rekor.ts";
+import { renderCertificatePdf } from "./pdf.ts";
 
 async function assignStatusIndex(cfg: StatusListConfig): Promise<number> {
   let current = 0;
@@ -44,7 +45,7 @@ async function deriveCode(
 ): Promise<string> {
   const normalized = name.normalize("NFD").toLowerCase();
   const hex = await sha256Hex(`${course}:${date}:${normalized}:${salt}`);
-  return `${course}-${hex.slice(0, 4).toUpperCase()}`;
+  return `${course}-${hex.slice(0, 6).toUpperCase()}`;
 }
 
 async function deriveRecipientIdHex(
@@ -166,6 +167,31 @@ export async function signAndPublish(
     ledgerIndex = entry.i;
   }
 
+  let pdfPath: string | undefined;
+  if (config.pdf) {
+    const validatorUrl = config.pdf.validatorUrlTemplate
+      .replace("{code}", encodeURIComponent(code))
+      .replace("{name}", encodeURIComponent(input.name));
+    const pdfBytes = await renderCertificatePdf({
+      recipientName: input.name,
+      courseName: course.name,
+      courseCode: input.course,
+      credentialCode: code,
+      dateIso: validFromIso,
+      hours: course.hours,
+      topics: course.descBullets,
+      issuerName: course.seriesMeta?.issuerName ?? "Geoscientific Chaos Union",
+      issuerLabel: course.seriesMeta?.issuerLabel,
+      orgName: course.seriesMeta?.org,
+      seriesName: course.seriesMeta?.name,
+      validatorUrl,
+      accentColor: course.seriesMeta?.accent,
+    });
+    pdfPath = `${config.pdf.outputDir}/${code}.pdf`;
+    await Deno.mkdir(config.pdf.outputDir, { recursive: true });
+    await Deno.writeFile(pdfPath, pdfBytes);
+  }
+
   let rekorBundlePaths: IssuanceResult["rekorBundlePaths"];
   if (config.rekor) {
     const credBundle = `${config.repoRoot}/credentials/${code}.rekor.bundle`;
@@ -205,5 +231,6 @@ export async function signAndPublish(
     statusIndex,
     ledgerIndex,
     rekorBundlePaths,
+    pdfPath,
   };
 }

@@ -17,12 +17,20 @@ export interface Alignment {
 // Flat per-locale view consumed by the signing pipeline.
 export interface CourseEntry {
   name: string;
-  description: string;
+  description: string; // bullets joined with "; " for display as a single string
+  descBullets: string[];
   hours: number;
   tags?: string[];
   alignment?: Alignment[];
   language: string;
   series?: string;
+  seriesMeta?: {
+    name?: string; // human series name, e.g. "Patchbay"
+    accent?: string;
+    issuerName?: string;
+    issuerLabel?: string;
+    org?: string;
+  };
 }
 
 // Authoring format of the top-level courses.json (nested, multi-locale).
@@ -73,6 +81,13 @@ export interface RekorConfig {
   runner?: CosignRunner;
 }
 
+export interface PdfConfig {
+  outputDir: string;
+  // Template with `{code}` and `{name}` placeholders; produces the validator URL.
+  // Example: "https://gentropic.org/cert/#v={code}&n={name}"
+  validatorUrlTemplate: string;
+}
+
 export interface EngineConfig {
   baseUrl: string;
   issuerId: string;
@@ -86,6 +101,7 @@ export interface EngineConfig {
   statusList?: StatusListConfig;
   ledger?: LedgerConfig;
   rekor?: RekorConfig;
+  pdf?: PdfConfig;
 }
 
 export interface IssuanceResult {
@@ -101,6 +117,7 @@ export interface IssuanceResult {
     endorsement: string;
     ledgerTip?: string;
   };
+  pdfPath?: string;
 }
 
 export interface Signer {

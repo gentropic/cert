@@ -81,7 +81,7 @@ Deno.test("sign → verify round trip + tampering detection", async () => {
     );
 
     assertEquals(result.code.startsWith("TEST-101-"), true);
-    assertEquals(result.code.length, "TEST-101-".length + 4);
+    assertEquals(result.code.length, "TEST-101-".length + 6);
 
     const credential = JSON.parse(await Deno.readTextFile(result.credentialPath));
     const ok = await verifyCredential(credential, config.pinnedDocuments);
