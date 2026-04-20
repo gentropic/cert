@@ -351,8 +351,6 @@ const STRINGS = {
   pt: { certOf: 'CERTIFICADO DE CONCLUS\u00c3O', certifies: 'Certificamos que', completed: 'concluiu com \u00eaxito', topics: 'T\u00f3picos abordados', workload: 'Carga hor\u00e1ria', hours: 'horas', dateLabel: 'Data de conclus\u00e3o', validCode: 'C\u00f3digo de valida\u00e7\u00e3o', validURL: 'Verifique em' },
 };
 
-const BACKGROUNDS = { topo: renderTopoContours, blocks: renderBlockGrid, skulls: renderSkullsBg };
-
 let currentLang = 'en';
 let currentCert = null;
 let isPreview = false;
@@ -1008,7 +1006,8 @@ function renderCertificate() {
   const course = COURSES[currentCert.courseKey];
   const series = SERIES[course.series];
   const layoutKey = course.layout || series.layout;
-  const bgFn = BACKGROUNDS[layoutKey] || renderTopoContours;
+  const backgrounds = { topo: renderTopoContours, blocks: renderBlockGrid, skulls: renderSkullsBg };
+  const bgFn = backgrounds[layoutKey] || renderTopoContours;
 
   const canvas = document.getElementById('certCanvas');
   const ctx = canvas.getContext('2d');
