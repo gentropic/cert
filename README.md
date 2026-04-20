@@ -2,11 +2,11 @@
 
 Open Badges v3 / W3C Verifiable Credentials issuer for the Geoscientific Chaos Union (GCU). Serves at `https://gentropic.org/cert/` via GitHub Pages. Issuer identity: `did:web:gentropic.org`.
 
-Status: pre-v1 scaffolding. See [`docs/IMPLEMENTATION-PLAN.md`](docs/IMPLEMENTATION-PLAN.md) for build phases and [`docs/SPEC-v1.md`](docs/SPEC-v1.md) for the full design.
+Status: v1 in progress. See [`docs/IMPLEMENTATION-PLAN.md`](docs/IMPLEMENTATION-PLAN.md) for build phases, [`docs/SPEC-v1.md`](docs/SPEC-v1.md) for the full design, and [`docs/OPERATIONS.md`](docs/OPERATIONS.md) for the operator runbook (GitHub secrets, CLI usage, rotation procedures).
 
 ## Verify a credential
 
-Once v1 ships, every issued certificate will carry a QR code pointing to the validator at `https://gentropic.org/cert/#v={code}&n={name}`. The validator runs entirely in-browser: Ed25519 signature check via Web Crypto, StatusList2021 revocation bit, OpenTimestamps Bitcoin-anchor status, and public ledger membership. Signed JSON and `.ots` receipts are downloadable for independent verification via third-party tools.
+Once v1 ships, every issued certificate carries a QR code pointing to the validator at `https://gentropic.org/cert/#v={code}&n={name}`. The validator runs entirely in-browser: Ed25519 signature check via Web Crypto, BitstringStatusList revocation bit, Rekor inclusion proof, and public ledger membership. Signed JSON, `.rekor.bundle` and the PDF/A-3B certificate are downloadable for independent verification via third-party tools.
 
 ## Repository layout
 
