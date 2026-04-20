@@ -1,0 +1,1122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GCU — Certificate Validation</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #111110;
+  --surface: #1a1a18;
+  --border: #2a2a26;
+  --border-hi: #3a3a34;
+  --text: #d4d0c8;
+  --text-dim: #8a8780;
+  --text-faint: #5a5850;
+  --amber: #d4a017;
+  --amber-dim: rgba(212,160,23,0.12);
+  --cyan: #3ec9d1;
+  --cyan-dim: rgba(62,201,209,0.12);
+  --green: #6abf69;
+  --green-dim: rgba(106,191,105,0.12);
+  --red: #c0392b;
+  --purple: #a78bfa;
+  --purple-dim: rgba(167,139,250,0.12);
+  --accent: #d4a017;
+  --accent-dim: rgba(212,160,23,0.12);
+  --accent-glow: rgba(212,160,23,0.2);
+  --mono: 'IBM Plex Mono', monospace;
+  --sans: 'IBM Plex Sans', sans-serif;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--sans);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+body::before {
+  content: '';
+  position: fixed; inset: 0; z-index: 999;
+  pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+  background-size: 256px 256px;
+}
+
+.bg-cables {
+  position: fixed; inset: 0; z-index: 0; overflow: hidden;
+  opacity: 0.06;
+  display: none;
+}
+.bg-cables svg { width: 100%; height: 100%; }
+
+.container {
+  position: relative; z-index: 1;
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 4rem 2rem 3rem;
+}
+
+.header { text-align: center; margin-bottom: 3rem; animation: fadeUp 0.6s ease-out both; }
+.logo { font-family: var(--mono); font-size: 3.2rem; font-weight: 700; letter-spacing: -0.03em; margin-bottom: 0.5rem; color: var(--text); }
+.series-tag { font-family: var(--mono); font-size: 0.78rem; color: var(--accent); margin-top: 0.6rem; opacity: 0; transition: opacity 0.3s, color 0.3s; }
+.series-tag.visible { opacity: 1; }
+.tagline { font-size: 0.95rem; color: var(--text-dim); font-family: var(--mono); font-weight: 400; letter-spacing: 0.01em; }
+
+.form-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 2.5rem 2rem;
+  max-width: 480px;
+  margin: 0 auto 2rem;
+  animation: fadeUp 0.6s 0.15s ease-out both;
+}
+.form-card h2 { font-family: var(--mono); font-size: 1rem; font-weight: 600; margin-bottom: 1.5rem; color: var(--text); }
+.form-group { margin-bottom: 1.2rem; }
+.form-group label { display: block; font-family: var(--mono); font-size: 0.75rem; color: var(--text-dim); margin-bottom: 0.4rem; }
+.form-group input {
+  width: 100%;
+  padding: 0.7rem 1rem;
+  font-family: var(--mono);
+  font-size: 0.85rem;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+  outline: none;
+  transition: border-color 0.2s;
+}
+.form-group input:focus { border-color: var(--accent); }
+.form-group input::placeholder { color: var(--text-faint); }
+
+.validate-btn {
+  display: block; width: 100%;
+  font-family: var(--mono); font-size: 0.85rem; font-weight: 600;
+  padding: 0.75rem;
+  border: 1.5px solid var(--accent);
+  border-radius: 6px;
+  background: var(--accent-dim);
+  color: var(--accent);
+  cursor: pointer;
+  transition: all 0.2s;
+  margin-top: 0.5rem;
+}
+.validate-btn:hover { background: var(--accent); color: var(--bg); box-shadow: 0 0 20px var(--accent-glow); }
+
+.error-msg { font-family: var(--mono); font-size: 0.78rem; color: var(--red); margin-top: 1rem; display: none; }
+.error-msg.visible { display: block; }
+
+.cert-preview { display: none; animation: fadeUp 0.6s ease-out both; }
+.cert-preview.visible { display: block; }
+
+.cert-controls { display: flex; justify-content: center; align-items: center; gap: 1rem; margin-bottom: 1.5rem; flex-wrap: wrap; }
+
+.lang-toggle {
+  font-family: var(--mono); font-size: 0.78rem;
+  padding: 0.4rem 0.8rem;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--surface);
+  color: var(--text-dim);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.lang-toggle:hover { border-color: var(--border-hi); color: var(--text); }
+.lang-toggle.active { border-color: var(--accent); color: var(--accent); background: var(--accent-dim); }
+
+.download-btn {
+  display: inline-flex; align-items: center; gap: 0.5rem;
+  font-family: var(--mono); font-size: 0.82rem; font-weight: 600;
+  padding: 0.5rem 1.2rem;
+  border: 1.5px solid var(--accent);
+  border-radius: 6px;
+  background: var(--accent-dim);
+  color: var(--accent);
+  cursor: pointer;
+  text-decoration: none;
+  transition: all 0.2s;
+}
+.download-btn:hover { background: var(--accent); color: var(--bg); box-shadow: 0 0 20px var(--accent-glow); }
+
+.back-btn {
+  font-family: var(--mono); font-size: 0.78rem;
+  padding: 0.5rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-dim);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.back-btn:hover { border-color: var(--border-hi); color: var(--text); }
+
+.canvas-wrap { display: flex; justify-content: center; margin-bottom: 1.5rem; }
+.canvas-wrap canvas { max-width: 100%; height: auto; border: 1px solid var(--border); border-radius: 4px; }
+
+/* Trust panel — the new piece */
+.trust-panel {
+  max-width: 720px;
+  margin: 0 auto 2rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 1.5rem 1.75rem;
+  font-family: var(--mono);
+  font-size: 0.82rem;
+}
+.trust-panel h3 {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 1rem;
+}
+.trust-row {
+  display: flex; align-items: flex-start; gap: 0.75rem;
+  padding: 0.5rem 0;
+  border-bottom: 1px dashed var(--border);
+}
+.trust-row:last-child { border-bottom: none; }
+.trust-icon { flex: 0 0 1.4rem; font-size: 1rem; line-height: 1.4rem; }
+.trust-icon.ok { color: var(--green); }
+.trust-icon.bad { color: var(--red); }
+.trust-icon.warn { color: var(--amber); }
+.trust-icon.pending { color: var(--text-faint); }
+.trust-label { flex: 1 1 auto; }
+.trust-label strong { display: block; color: var(--text); font-weight: 500; }
+.trust-label span { display: block; color: var(--text-dim); font-size: 0.76rem; margin-top: 0.15rem; }
+.trust-link { color: var(--accent); text-decoration: none; font-size: 0.76rem; }
+.trust-link:hover { text-decoration: underline; }
+
+.share-section { max-width: 600px; margin: 0 auto 2rem; }
+.share-section label { display: block; font-family: var(--mono); font-size: 0.72rem; color: var(--text-faint); margin-bottom: 0.4rem; }
+.share-row { display: flex; gap: 0.5rem; }
+.share-row input {
+  flex: 1;
+  padding: 0.5rem 0.8rem;
+  font-family: var(--mono); font-size: 0.72rem;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text-dim);
+  outline: none;
+}
+.copy-btn {
+  font-family: var(--mono); font-size: 0.72rem;
+  padding: 0.5rem 0.8rem;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--surface);
+  color: var(--text-dim);
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+.copy-btn:hover { border-color: var(--border-hi); color: var(--text); }
+
+.downloads-row { display: flex; gap: 0.5rem; flex-wrap: wrap; justify-content: center; margin-top: 1rem; }
+.downloads-row .download-btn { font-size: 0.74rem; padding: 0.4rem 0.9rem; }
+
+.footer { text-align: center; padding: 2rem 0 1rem; font-size: 0.65rem; color: var(--text-faint); font-family: var(--mono); animation: fadeUp 0.6s 0.25s ease-out both; }
+.footer a { color: var(--text-dim); text-decoration: none; transition: color 0.15s; }
+.footer a:hover { color: var(--cyan); }
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@media (max-width: 600px) {
+  .container { padding: 2.5rem 1.2rem 2rem; }
+  .logo { font-size: 2.2rem; }
+  .form-card { padding: 1.8rem 1.2rem; }
+  .cert-controls { flex-direction: column; gap: 0.8rem; }
+}
+</style>
+</head>
+<body>
+
+<div class="bg-cables">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <style>
+      .cable { fill:none; stroke:#d4a017; stroke-width:1.5; }
+      .cable2 { fill:none; stroke:#3ec9d1; stroke-width:1; }
+      .cable3 { fill:none; stroke:#6abf69; stroke-width:1; }
+    </style>
+  </defs>
+  <path class="cable" d="M0,80 C200,80 200,200 400,200 S600,320 800,320"/>
+  <path class="cable2" d="M0,200 C150,200 250,100 400,100 S650,300 800,180"/>
+  <path class="cable3" d="M0,400 C200,400 300,280 500,300 S700,450 800,400"/>
+  <path class="cable" d="M0,520 C300,520 200,400 500,450 S700,550 800,500"/>
+  <path class="cable2" d="M0,350 C100,350 300,500 500,480 S600,350 800,280"/>
+  <circle cx="400" cy="200" r="3" fill="#d4a017" opacity="0.5"/>
+  <circle cx="400" cy="100" r="3" fill="#3ec9d1" opacity="0.5"/>
+  <circle cx="500" cy="300" r="3" fill="#6abf69" opacity="0.5"/>
+  <circle cx="500" cy="450" r="3" fill="#d4a017" opacity="0.5"/>
+  <circle cx="500" cy="480" r="3" fill="#3ec9d1" opacity="0.5"/>
+</svg>
+</div>
+
+<div class="container">
+  <header class="header">
+    <div class="logo">GCU</div>
+    <div class="tagline">certificate validation</div>
+    <div id="seriesTag" class="series-tag"></div>
+  </header>
+
+  <div id="formSection" class="form-card">
+    <h2>Validate your certificate</h2>
+    <div class="form-group">
+      <label for="nameInput">Full name</label>
+      <input type="text" id="nameInput" placeholder="as registered">
+    </div>
+    <div class="form-group">
+      <label for="codeInput">Validation code</label>
+      <input type="text" id="codeInput" placeholder="PB-101-XXXXXX">
+    </div>
+    <button class="validate-btn" onclick="validate()">Validate</button>
+    <div id="errorMsg" class="error-msg"></div>
+  </div>
+
+  <div id="certPreview" class="cert-preview">
+    <div class="cert-controls">
+      <button class="back-btn" onclick="showForm()">&#8592; New validation</button>
+      <button class="lang-toggle active" id="btnEN" onclick="setLang('en')">EN</button>
+      <button class="lang-toggle" id="btnPT" onclick="setLang('pt')">PT</button>
+      <a class="download-btn" id="pdfBtn" href="#" download>&#8595; PDF</a>
+    </div>
+    <div class="canvas-wrap">
+      <canvas id="certCanvas" width="2100" height="2970"></canvas>
+    </div>
+
+    <div id="trustPanel" class="trust-panel" style="display:none">
+      <h3>Trust checks</h3>
+      <div id="trustRows"></div>
+      <div class="downloads-row">
+        <a class="download-btn" id="dlCredential" href="#" download>credential.json</a>
+        <a class="download-btn" id="dlEndorsement" href="#" download>endorsement.json</a>
+        <a class="download-btn" id="dlRekor" href="#" download style="display:none">rekor.bundle</a>
+        <a class="download-btn" id="dlVcPlayground" href="#" target="_blank" rel="noopener">Verify on VC Playground ↗</a>
+      </div>
+    </div>
+
+    <div class="share-section">
+      <label>Share / validation URL</label>
+      <div class="share-row">
+        <input type="text" id="shareURL" readonly>
+        <button class="copy-btn" onclick="copyShare()">Copy</button>
+        <button class="copy-btn" id="shareBtn" onclick="shareCert()" style="display:none">Share</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">
+    <a href="https://gentropic.org" target="_blank">Geoscientific Chaos Union</a>
+    &nbsp;&middot;&nbsp; <a href="docs/SPEC-v1.md" target="_blank">spec</a>
+    &nbsp;&middot;&nbsp; <a href="https://github.com/gentropic/cert" target="_blank">source</a>
+    <br><span style="opacity:0.6">QR codes by <a href="https://www.nayuki.io/page/qr-code-generator-library" target="_blank">Nayuki</a></span>
+  </div>
+</div>
+
+<script src="./qrcodegen-v1.8.0-es6.js"></script>
+<script type="module">
+import * as vc from 'https://esm.sh/@digitalbazaar/vc@7.3.0';
+import { DataIntegrityProof } from 'https://esm.sh/@digitalbazaar/data-integrity@2.5.0';
+import { cryptosuite as eddsaRdfc2022 } from 'https://esm.sh/@digitalbazaar/eddsa-rdfc-2022-cryptosuite@1.3.0';
+
+window.__vc = { vc, DataIntegrityProof, eddsaRdfc2022 };
+window.dispatchEvent(new Event('__vc-ready'));
+</script>
+<script>
+/* ══════════════════════════════════════════════════
+   Configuration
+   ══════════════════════════════════════════════════ */
+
+let SERIES = {};
+let COURSES = {};
+
+const ISSUER_DID = 'did:web:gentropic.org';
+
+const STRINGS = {
+  en: { certOf: 'CERTIFICATE OF COMPLETION', certifies: 'This certifies that', completed: 'has successfully completed', topics: 'Topics covered', workload: 'Workload', hours: 'hours', dateLabel: 'Date of completion', validCode: 'Validation code', validURL: 'Verify at' },
+  pt: { certOf: 'CERTIFICADO DE CONCLUS\u00c3O', certifies: 'Certificamos que', completed: 'concluiu com \u00eaxito', topics: 'T\u00f3picos abordados', workload: 'Carga hor\u00e1ria', hours: 'horas', dateLabel: 'Data de conclus\u00e3o', validCode: 'C\u00f3digo de valida\u00e7\u00e3o', validURL: 'Verifique em' },
+};
+
+const BACKGROUNDS = { topo: renderTopoContours, blocks: renderBlockGrid, skulls: renderSkullsBg };
+
+let currentLang = 'en';
+let currentCert = null;
+let isPreview = false;
+
+/* ══════════════════════════════════════════════════
+   Init
+   ══════════════════════════════════════════════════ */
+
+async function init() {
+  try {
+    const resp = await fetch('./courses.json');
+    if (resp.ok) {
+      const cfg = await resp.json();
+      SERIES = cfg.series || {};
+      COURSES = cfg.courses || {};
+    }
+  } catch (_) { /* data unavailable */ }
+
+  const hash = window.location.hash.slice(1);
+  if (hash) {
+    const params = new URLSearchParams(hash);
+    const preview = params.get('preview');
+    if (preview) {
+      enterPreviewMode(preview, params.get('n') || 'Ana Costa');
+    } else {
+      const code = params.get('v');
+      const name = params.get('n');
+      if (code && name) {
+        document.getElementById('nameInput').value = name;
+        document.getElementById('codeInput').value = code;
+        validate();
+      }
+    }
+  }
+}
+document.fonts.ready.then(init);
+
+/* ══════════════════════════════════════════════════
+   Form & validation
+   ══════════════════════════════════════════════════ */
+
+function normalize(s) {
+  return s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+}
+
+async function validate() {
+  const name = document.getElementById('nameInput').value.trim();
+  const code = document.getElementById('codeInput').value.trim().toUpperCase();
+  const errEl = document.getElementById('errorMsg');
+
+  if (!name || !code) {
+    showError(errEl, 'Please enter both name and validation code.');
+    return;
+  }
+
+  // Fetch the signed credential — our manifest-free model.
+  let credential;
+  try {
+    const resp = await fetch(`./credentials/${code}.json`);
+    if (!resp.ok) throw new Error(`${resp.status}`);
+    credential = await resp.json();
+  } catch (e) {
+    showError(errEl, `No certificate found for code ${code}.`);
+    return;
+  }
+
+  const credName = credential?.credentialSubject?.name ?? '';
+  if (normalize(credName) !== normalize(name)) {
+    showError(errEl, 'Name does not match the certificate for this code.');
+    return;
+  }
+
+  const courseKey = guessCourseKey(code);
+  const course = COURSES[courseKey];
+  if (!course) {
+    showError(errEl, `Unknown course: ${courseKey}`);
+    return;
+  }
+
+  errEl.classList.remove('visible');
+  currentCert = {
+    name: credName,
+    code,
+    courseKey,
+    date: (credential.validFrom || '').slice(0, 10),
+    credential,
+  };
+  showPreview();
+  runTrustChecks().catch((e) => console.error('Trust checks failed:', e));
+}
+
+function guessCourseKey(code) {
+  // Credential code is "{COURSE}-{6 hex}" — strip the suffix.
+  return code.replace(/-[^-]+$/, '');
+}
+
+function showError(el, msg) {
+  el.textContent = msg;
+  el.classList.add('visible');
+}
+
+function enterPreviewMode(courseKey, name) {
+  const course = COURSES[courseKey];
+  if (!course) return;
+  isPreview = true;
+  currentCert = {
+    name,
+    courseKey,
+    code: courseKey + '-SAMPLE',
+    date: new Date().toISOString().slice(0, 10),
+  };
+  showPreview();
+}
+
+/* ══════════════════════════════════════════════════
+   UI state
+   ══════════════════════════════════════════════════ */
+
+function applyTheme(hex) {
+  const el = document.documentElement;
+  el.style.setProperty('--accent', hex);
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  el.style.setProperty('--accent-dim', `rgba(${r},${g},${b},0.12)`);
+  el.style.setProperty('--accent-glow', `rgba(${r},${g},${b},0.2)`);
+}
+
+function showPreview() {
+  document.getElementById('formSection').style.display = 'none';
+  document.getElementById('certPreview').classList.add('visible');
+
+  const course = COURSES[currentCert.courseKey];
+  const series = SERIES[course.series];
+  applyTheme(series.pageAccent);
+
+  document.querySelector('.bg-cables').style.display =
+    series.pageBg === 'cables' ? 'block' : 'none';
+
+  const tag = document.getElementById('seriesTag');
+  tag.textContent = series.name + ' series';
+  tag.classList.add('visible');
+
+  if (isPreview) {
+    document.getElementById('shareURL').value = 'Preview mode \u2014 not a real certificate';
+    document.getElementById('shareBtn').style.display = 'none';
+    document.getElementById('trustPanel').style.display = 'none';
+    document.getElementById('pdfBtn').style.display = 'none';
+  } else {
+    const base = window.location.href.split('#')[0];
+    const url = base + '#v=' + encodeURIComponent(currentCert.code) + '&n=' + encodeURIComponent(currentCert.name);
+    document.getElementById('shareURL').value = url;
+    document.getElementById('shareBtn').style.display = navigator.share ? 'block' : 'none';
+    document.getElementById('pdfBtn').href = `./pdfs/${currentCert.code}.pdf`;
+    document.getElementById('pdfBtn').style.display = '';
+    document.getElementById('dlCredential').href = `./credentials/${currentCert.code}.json`;
+    document.getElementById('dlEndorsement').href = `./endorsements/${currentCert.code}.json`;
+    document.getElementById('dlRekor').href = `./credentials/${currentCert.code}.rekor.bundle`;
+    document.getElementById('dlVcPlayground').href = `https://vc.digitalbazaar.com/verifier/?credential=${encodeURIComponent(JSON.stringify(currentCert.credential))}`;
+    document.getElementById('trustPanel').style.display = '';
+  }
+
+  renderCertificate();
+}
+
+function showForm() {
+  isPreview = false;
+  document.getElementById('formSection').style.display = 'block';
+  document.getElementById('certPreview').classList.remove('visible');
+  document.getElementById('seriesTag').classList.remove('visible');
+  document.querySelector('.bg-cables').style.display = 'none';
+  applyTheme('#d4a017');
+  currentCert = null;
+}
+
+function setLang(lang) {
+  currentLang = lang;
+  document.getElementById('btnEN').classList.toggle('active', lang === 'en');
+  document.getElementById('btnPT').classList.toggle('active', lang === 'pt');
+  renderCertificate();
+}
+
+function copyShare() {
+  const input = document.getElementById('shareURL');
+  navigator.clipboard.writeText(input.value).then(() => {
+    const btn = input.nextElementSibling;
+    btn.textContent = 'Copied!';
+    setTimeout(() => { btn.textContent = 'Copy'; }, 2000);
+  });
+}
+
+function shareCert() {
+  const course = COURSES[currentCert.courseKey];
+  const url = document.getElementById('shareURL').value;
+  navigator.share({
+    title: course.title[currentLang],
+    text: currentCert.name + ' — ' + course.title[currentLang],
+    url,
+  }).catch(() => {});
+}
+
+window.validate = validate;
+window.showForm = showForm;
+window.setLang = setLang;
+window.copyShare = copyShare;
+window.shareCert = shareCert;
+</script>
+<script>
+/* ══════════════════════════════════════════════════
+   Trust checks — signature, status, ledger, rekor
+   ══════════════════════════════════════════════════ */
+
+function trustRow({ state, label, detail, href }) {
+  const icon = { ok: '✓', bad: '✗', warn: '⚠', pending: '…' }[state] || '…';
+  const linkHtml = href ? ` <a class="trust-link" href="${href}" target="_blank" rel="noopener">open ↗</a>` : '';
+  return `
+    <div class="trust-row">
+      <div class="trust-icon ${state}">${icon}</div>
+      <div class="trust-label">
+        <strong>${label}</strong>
+        <span>${detail}${linkHtml}</span>
+      </div>
+    </div>
+  `;
+}
+
+function setTrust(rows) {
+  document.getElementById('trustRows').innerHTML = rows.join('');
+}
+
+async function runTrustChecks() {
+  const rows = [
+    { state: 'pending', label: 'Signature', detail: 'verifying…' },
+    { state: 'pending', label: 'Revocation', detail: 'checking status list…' },
+    { state: 'pending', label: 'Ledger', detail: 'locating credential…' },
+    { state: 'pending', label: 'Rekor transparency', detail: 'looking up bundle…' },
+  ];
+  setTrust(rows.map(trustRow));
+
+  // Wait for the esm.sh imports to resolve.
+  if (!window.__vc) await new Promise((r) => window.addEventListener('__vc-ready', r, { once: true }));
+  const { vc, DataIntegrityProof, eddsaRdfc2022 } = window.__vc;
+
+  const credential = currentCert.credential;
+
+  // ── Status list (cheap, do first) ──
+  try {
+    const cs = credential.credentialStatus;
+    if (cs && cs.statusListCredential) {
+      const listRes = await fetch(cs.statusListCredential);
+      if (listRes.ok) {
+        const list = await listRes.json();
+        const revoked = await checkStatusBit(list, Number(cs.statusListIndex));
+        rows[1] = revoked
+          ? { state: 'bad', label: 'Revocation', detail: 'Credential is REVOKED.' }
+          : { state: 'ok', label: 'Revocation', detail: 'Not revoked.' };
+      } else {
+        rows[1] = { state: 'warn', label: 'Revocation', detail: 'Status list unreachable; treating as valid with a warning.' };
+      }
+    } else {
+      rows[1] = { state: 'warn', label: 'Revocation', detail: 'No credentialStatus — revocation not declared.' };
+    }
+  } catch (e) {
+    rows[1] = { state: 'warn', label: 'Revocation', detail: `Status check error: ${e.message}` };
+  }
+  setTrust(rows.map(trustRow));
+
+  // ── Ledger membership ──
+  try {
+    const ledgerRes = await fetch('./ledger.jsonl');
+    if (!ledgerRes.ok) throw new Error(`ledger HTTP ${ledgerRes.status}`);
+    const text = await ledgerRes.text();
+    const lines = text.split(/\r?\n/).filter(Boolean);
+    const credHash = await sha256Hex(JSON.stringify(credential, null, 2));
+    const match = lines.find((l) => l.includes(`"code":"${currentCert.code}"`));
+    if (match) {
+      const entry = JSON.parse(match);
+      const matchesHash = (entry.credential_hash || '').endsWith(credHash);
+      rows[2] = matchesHash
+        ? { state: 'ok', label: 'Ledger', detail: `Entry #${entry.i} matches; issued ${entry.t.slice(0,10)}.` }
+        : { state: 'warn', label: 'Ledger', detail: 'Found entry, but credential hash differs (local JSON may have been re-serialized).' };
+    } else {
+      rows[2] = { state: 'bad', label: 'Ledger', detail: 'No ledger entry for this code — possible forgery.' };
+    }
+  } catch (e) {
+    rows[2] = { state: 'warn', label: 'Ledger', detail: `Ledger unavailable: ${e.message}` };
+  }
+  setTrust(rows.map(trustRow));
+
+  // ── Rekor ──
+  try {
+    const rekorRes = await fetch(`./credentials/${currentCert.code}.rekor.bundle`);
+    if (rekorRes.ok) {
+      const b = await rekorRes.json();
+      const time = b?.verificationMaterial?.timestampVerificationData ?? b?.rekorBundle ?? null;
+      rows[3] = {
+        state: 'ok',
+        label: 'Rekor transparency',
+        detail: 'Inclusion proof committed alongside the credential.',
+        href: `https://search.sigstore.dev/?hash=${await sha256Hex(JSON.stringify(credential, null, 2))}`,
+      };
+      document.getElementById('dlRekor').style.display = '';
+      void time;
+    } else if (rekorRes.status === 404) {
+      rows[3] = { state: 'warn', label: 'Rekor transparency', detail: 'No Rekor bundle committed (Rekor logging was off for this issuance).' };
+    } else {
+      rows[3] = { state: 'warn', label: 'Rekor transparency', detail: `Bundle unreachable: HTTP ${rekorRes.status}.` };
+    }
+  } catch (e) {
+    rows[3] = { state: 'warn', label: 'Rekor transparency', detail: `Rekor check error: ${e.message}` };
+  }
+  setTrust(rows.map(trustRow));
+
+  // ── Signature (heavy — RDFC + verify) ──
+  try {
+    const documentLoader = makeFetchingLoader();
+    const suite = new DataIntegrityProof({ cryptosuite: eddsaRdfc2022 });
+    const checkStatus = async () => ({ verified: true }); // already checked above
+    const result = credential.credentialStatus
+      ? await vc.verifyCredential({ credential, suite, documentLoader, checkStatus })
+      : await vc.verifyCredential({ credential, suite, documentLoader });
+    if (result.verified) {
+      rows[0] = { state: 'ok', label: 'Signature', detail: `Ed25519 (${credential.proof?.cryptosuite || 'eddsa-rdfc-2022'}) verified against ${ISSUER_DID}.` };
+    } else {
+      const err = result.error?.message || result.results?.[0]?.error?.message || 'unknown';
+      rows[0] = { state: 'bad', label: 'Signature', detail: `Invalid signature — ${err}` };
+    }
+  } catch (e) {
+    rows[0] = { state: 'bad', label: 'Signature', detail: `Signature check error: ${e.message}` };
+  }
+  setTrust(rows.map(trustRow));
+}
+
+/* ── Status list bit decode ── */
+async function checkStatusBit(listCredential, index) {
+  const encoded = listCredential?.credentialSubject?.encodedList;
+  if (!encoded) throw new Error('status list missing encodedList');
+  const bytes = base64urlDecode(encoded);
+  const decompressed = await gunzip(bytes);
+  const byteIdx = index >>> 3;
+  const bitPos = 7 - (index & 7);
+  return ((decompressed[byteIdx] >> bitPos) & 1) === 1;
+}
+
+function base64urlDecode(s) {
+  const b64 = s.replace(/-/g, '+').replace(/_/g, '/') + '=='.slice(0, (4 - s.length % 4) % 4);
+  const bin = atob(b64);
+  const out = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+  return out;
+}
+
+async function gunzip(bytes) {
+  const stream = new Blob([bytes]).stream().pipeThrough(new DecompressionStream('gzip'));
+  return new Uint8Array(await new Response(stream).arrayBuffer());
+}
+
+async function sha256Hex(s) {
+  const data = new TextEncoder().encode(s);
+  const buf = await crypto.subtle.digest('SHA-256', data);
+  return Array.from(new Uint8Array(buf), (b) => b.toString(16).padStart(2, '0')).join('');
+}
+
+/* ── Fetching document loader for @digitalbazaar/vc ── */
+function makeFetchingLoader() {
+  const contexts = new Map();
+  // Minimal context pre-pin: fetch once per session.
+  async function pinContext(url) {
+    if (contexts.has(url)) return contexts.get(url);
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(`context fetch failed ${url}: ${res.status}`);
+    const doc = await res.json();
+    contexts.set(url, doc);
+    return doc;
+  }
+  return async (url) => {
+    if (url.startsWith('did:web:')) {
+      const [did, frag] = url.split('#');
+      const rest = did.slice('did:web:'.length);
+      const [host, ...path] = rest.split(':');
+      const httpsUrl = path.length > 0 ? `https://${host}/${path.join('/')}/did.json` : `https://${host}/.well-known/did.json`;
+      const r = await fetch(httpsUrl);
+      if (!r.ok) throw new Error(`did:web failed: ${r.status}`);
+      const doc = await r.json();
+      if (frag) {
+        const vms = doc.verificationMethod || [];
+        const vm = vms.find((m) => m.id === url || m.id === `#${frag}`);
+        if (vm) return { contextUrl: null, documentUrl: url, document: vm };
+      }
+      return { contextUrl: null, documentUrl: url, document: doc };
+    }
+    const fetchUrl = url.split('#')[0];
+    const r = await fetch(fetchUrl);
+    if (!r.ok) throw new Error(`fetch ${url}: ${r.status}`);
+    const doc = await r.json();
+    return { contextUrl: null, documentUrl: url, document: doc };
+  };
+}
+</script>
+<script>
+/* ══════════════════════════════════════════════════
+   Seeded PRNG — mulberry32
+   ══════════════════════════════════════════════════ */
+
+function hashCode(str) {
+  let h = 0;
+  for (let i = 0; i < str.length; i++) h = ((h << 5) - h + str.charCodeAt(i)) | 0;
+  return h >>> 0;
+}
+function mulberry32(seed) {
+  return function () {
+    seed |= 0;
+    seed = seed + 0x6D2B79F5 | 0;
+    let t = Math.imul(seed ^ seed >>> 15, 1 | seed);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  };
+}
+
+/* ══════════════════════════════════════════════════
+   2D Value Noise + Marching Squares (topo contours)
+   ══════════════════════════════════════════════════ */
+
+function generateNoiseField(rng, cols, rows, octaves) {
+  function makeGrid(c, r) {
+    const g = [];
+    for (let i = 0; i < r; i++) { g[i] = []; for (let j = 0; j < c; j++) g[i][j] = rng(); }
+    return g;
+  }
+  function sample(grid, x, y, gc, gr) {
+    const fx = x * (gc - 1), fy = y * (gr - 1);
+    const ix = Math.floor(fx), iy = Math.floor(fy);
+    const dx = fx - ix, dy = fy - iy;
+    const ix1 = Math.min(ix + 1, gc - 1);
+    const iy1 = Math.min(iy + 1, gr - 1);
+    return grid[iy][ix] * (1 - dx) * (1 - dy) + grid[iy][ix1] * dx * (1 - dy) + grid[iy1][ix] * (1 - dx) * dy + grid[iy1][ix1] * dx * dy;
+  }
+  const field = [];
+  for (let y = 0; y < rows; y++) field[y] = new Array(cols).fill(0);
+  let amp = 1, totalAmp = 0;
+  for (let o = 0; o < octaves; o++) {
+    const gc = Math.max(3, Math.floor(cols / Math.pow(2, octaves - 1 - o)));
+    const gr = Math.max(3, Math.floor(rows / Math.pow(2, octaves - 1 - o)));
+    const grid = makeGrid(gc, gr);
+    for (let y = 0; y < rows; y++)
+      for (let x = 0; x < cols; x++)
+        field[y][x] += sample(grid, x / (cols - 1), y / (rows - 1), gc, gr) * amp;
+    totalAmp += amp; amp *= 0.5;
+  }
+  for (let y = 0; y < rows; y++) for (let x = 0; x < cols; x++) field[y][x] /= totalAmp;
+  return field;
+}
+
+function marchingSquares(field, threshold, cols, rows) {
+  const segments = [];
+  for (let y = 0; y < rows - 1; y++) {
+    for (let x = 0; x < cols - 1; x++) {
+      const tl = field[y][x], tr = field[y][x + 1], bl = field[y + 1][x], br = field[y + 1][x + 1];
+      let idx = 0;
+      if (tl >= threshold) idx |= 8;
+      if (tr >= threshold) idx |= 4;
+      if (br >= threshold) idx |= 2;
+      if (bl >= threshold) idx |= 1;
+      if (idx === 0 || idx === 15) continue;
+      const lerp = (a, b) => (threshold - a) / (b - a);
+      const top = { x: x + lerp(tl, tr), y };
+      const right = { x: x + 1, y: y + lerp(tr, br) };
+      const bottom = { x: x + lerp(bl, br), y: y + 1 };
+      const left = { x, y: y + lerp(tl, bl) };
+      const add = (a, b) => segments.push([a, b]);
+      switch (idx) {
+        case 1: add(left, bottom); break; case 2: add(bottom, right); break;
+        case 3: add(left, right); break; case 4: add(top, right); break;
+        case 5: add(left, top); add(bottom, right); break;
+        case 6: add(top, bottom); break; case 7: add(left, top); break;
+        case 8: add(top, left); break; case 9: add(top, bottom); break;
+        case 10: add(top, right); add(left, bottom); break;
+        case 11: add(top, right); break; case 12: add(left, right); break;
+        case 13: add(bottom, right); break; case 14: add(left, bottom); break;
+      }
+    }
+  }
+  return segments;
+}
+
+function renderTopoContours(ctx, code, color, W, H) {
+  const nCols = 40, nRows = 56, octaves = 3, numContours = 10, lineWidth = 2, opacityMin = 0.15, opacityRange = 0.20;
+  const rng = mulberry32(hashCode(code));
+  const field = generateNoiseField(rng, nCols, nRows, octaves);
+  const scaleX = W / (nCols - 1), scaleY = H / (nRows - 1);
+  ctx.save();
+  ctx.strokeStyle = color; ctx.lineWidth = lineWidth;
+  for (let i = 1; i <= numContours; i++) {
+    const t = i / (numContours + 1);
+    ctx.globalAlpha = opacityMin + (i / numContours) * opacityRange;
+    const segs = marchingSquares(field, t, nCols, nRows);
+    ctx.beginPath();
+    for (const [a, b] of segs) { ctx.moveTo(a.x * scaleX, a.y * scaleY); ctx.lineTo(b.x * scaleX, b.y * scaleY); }
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
+function renderBlockGrid(ctx, code, color, W, H) {
+  const rng = mulberry32(hashCode(code));
+  const nCols = 30, nRows = 42;
+  const field = generateNoiseField(rng, nCols, nRows, 3);
+  function sampleNoise(nx, ny) {
+    const fx = Math.min(nx, 1) * (nCols - 1), fy = Math.min(ny, 1) * (nRows - 1);
+    const ix = Math.floor(fx), iy = Math.floor(fy);
+    const dx = fx - ix, dy = fy - iy;
+    const ix1 = Math.min(ix + 1, nCols - 1), iy1 = Math.min(iy + 1, nRows - 1);
+    return field[iy][ix] * (1 - dx) * (1 - dy) + field[iy][ix1] * dx * (1 - dy) + field[iy1][ix] * (1 - dx) * dy + field[iy1][ix1] * dx * dy;
+  }
+  const rowH = 54; const rows = Math.ceil(H / rowH); const baseUnit = 50;
+  const unitChoices = [1, 1, 2, 2, 2, 3, 3, 4];
+  ctx.save();
+  for (let r = 0; r < rows; r++) {
+    const y = r * rowH;
+    let x = 0;
+    while (x < W) {
+      const units = unitChoices[Math.floor(rng() * unitChoices.length)];
+      let bw = baseUnit * units;
+      if (W - x - bw < baseUnit) bw = W - x;
+      if (bw <= 0) break;
+      const value = sampleNoise((x + bw / 2) / W, (y + rowH / 2) / H);
+      ctx.fillStyle = color; ctx.globalAlpha = 0.03 + value * 0.17;
+      ctx.fillRect(x, y, bw, rowH);
+      ctx.globalAlpha = 0.06; ctx.strokeStyle = color; ctx.lineWidth = 1;
+      ctx.strokeRect(x + 0.5, y + 0.5, bw - 1, rowH - 1);
+      x += bw;
+    }
+  }
+  ctx.restore();
+}
+
+function renderSkullsBg(ctx, code, color, W, H) {
+  const rng = mulberry32(hashCode(code));
+  const silverColor = '#8a8a84', goldColor = color;
+  ctx.save();
+  const placed = [];
+  const overlaps = (x, y, r) => {
+    for (const p of placed) {
+      const dx = x - p.x, dy = y - p.y;
+      const minDist = r + p.r + 8;
+      if (dx * dx + dy * dy < minDist * minDist) return true;
+    }
+    return false;
+  };
+  const goldRng = mulberry32(hashCode(code) + 7);
+  const goldBands = [0.08, 0.26, 0.44, 0.62, 0.80];
+  for (let i = 0; i < 5; i++) {
+    const scale = 100 + goldRng() * 50; const r = scale * 0.55;
+    let px, py, attempts = 0;
+    do { px = (0.15 + goldRng() * 0.55) * W; py = (goldBands[i] + goldRng() * 0.10) * H; attempts++; } while (overlaps(px, py, r) && attempts < 30);
+    placed.push({ x: px, y: py, r });
+    const gSkRng = mulberry32(Math.floor(goldRng() * 0xFFFFFF));
+    const rot = (goldRng() - 0.5) * 0.25;
+    ctx.save(); ctx.translate(px, py); ctx.rotate(rot); ctx.globalAlpha = 0.25;
+    ctx.strokeStyle = goldColor; ctx.fillStyle = goldColor;
+    drawSkull(ctx, 0, 0, scale, gSkRng); ctx.restore();
+  }
+  for (let i = 0; i < 200; i++) {
+    const scale = 35 + rng() * 45; const r = scale * 0.45;
+    let px, py, attempts = 0;
+    do { px = rng() * W; py = rng() * H; attempts++; } while (overlaps(px, py, r) && attempts < 40);
+    if (attempts >= 40) continue;
+    placed.push({ x: px, y: py, r });
+    const skRng = mulberry32(Math.floor(rng() * 0xFFFFFF));
+    const rot = (rng() - 0.5) * 0.4;
+    ctx.save(); ctx.translate(px, py); ctx.rotate(rot);
+    ctx.globalAlpha = 0.08 + rng() * 0.10;
+    ctx.strokeStyle = silverColor; ctx.fillStyle = silverColor;
+    drawSkull(ctx, 0, 0, scale, skRng); ctx.restore();
+  }
+  ctx.restore();
+}
+
+function drawSkull(ctx, cx, cy, size, rng) {
+  const s = size;
+  const craniumStretch = 0.9 + rng() * 0.2;
+  const jawWidth = 0.55 + rng() * 0.15;
+  const jawDrop = 0.35 + rng() * 0.15;
+  const eyeSpread = 0.25 + rng() * 0.10;
+  const eyeHeight = 0.05 + rng() * 0.10;
+  const eyeSize = 0.12 + rng() * 0.06;
+  const noseLen = 0.08 + rng() * 0.06;
+  const teethCount = 4 + Math.floor(rng() * 4);
+  ctx.lineWidth = Math.max(2, s * 0.02);
+  ctx.beginPath(); ctx.ellipse(cx, cy - s * 0.05, s * 0.45 * craniumStretch, s * 0.5, 0, 0, Math.PI * 2); ctx.stroke();
+  const jw = s * jawWidth, jd = s * jawDrop;
+  ctx.beginPath();
+  ctx.moveTo(cx - jw * 0.5, cy + s * 0.15);
+  ctx.quadraticCurveTo(cx - jw * 0.5, cy + s * 0.15 + jd, cx, cy + s * 0.15 + jd * 1.1);
+  ctx.quadraticCurveTo(cx + jw * 0.5, cy + s * 0.15 + jd, cx + jw * 0.5, cy + s * 0.15);
+  ctx.stroke();
+  const ex = s * eyeSpread, ey = cy - s * eyeHeight, er = s * eyeSize;
+  ctx.beginPath(); ctx.ellipse(cx - ex, ey, er, er * 0.85, 0, 0, Math.PI * 2); ctx.stroke();
+  ctx.beginPath(); ctx.ellipse(cx + ex, ey, er, er * 0.85, 0, 0, Math.PI * 2); ctx.stroke();
+  const ny = cy + s * 0.1, nl = s * noseLen;
+  ctx.beginPath(); ctx.moveTo(cx - nl * 0.5, ny); ctx.lineTo(cx + nl * 0.5, ny); ctx.lineTo(cx, ny + nl); ctx.closePath(); ctx.stroke();
+  const teethY = cy + s * 0.15 + jd * 0.3, teethH = jd * 0.4, teethSpan = jw * 0.4;
+  for (let t = 0; t < teethCount; t++) {
+    const tx = cx - teethSpan * 0.5 + (teethSpan / (teethCount - 1)) * t;
+    ctx.beginPath(); ctx.moveTo(tx, teethY); ctx.lineTo(tx, teethY + teethH); ctx.stroke();
+  }
+}
+
+/* ══════════════════════════════════════════════════
+   Text wrap
+   ══════════════════════════════════════════════════ */
+
+function wrapText(ctx, text, maxWidth) {
+  const words = text.split(' ');
+  const lines = [];
+  let line = '';
+  for (const word of words) {
+    const test = line ? line + ' ' + word : word;
+    if (ctx.measureText(test).width > maxWidth && line) { lines.push(line); line = word; } else line = test;
+  }
+  if (line) lines.push(line);
+  return lines;
+}
+
+/* ══════════════════════════════════════════════════
+   QR draw
+   ══════════════════════════════════════════════════ */
+
+function drawQR(ctx, url, cx, cy, size, color) {
+  const QrCode = qrcodegen.QrCode;
+  const qr = QrCode.encodeText(url, QrCode.Ecc.MEDIUM);
+  const modules = qr.size;
+  const cellSize = size / modules;
+  ctx.save();
+  ctx.fillStyle = '#fafaf8';
+  ctx.fillRect(cx - size / 2 - 6, cy - size / 2 - 6, size + 12, size + 12);
+  const ox = cx - size / 2, oy = cy - size / 2;
+  ctx.fillStyle = color;
+  for (let y = 0; y < modules; y++) {
+    for (let x = 0; x < modules; x++) {
+      if (qr.getModule(x, y)) ctx.fillRect(ox + x * cellSize, oy + y * cellSize, cellSize + 0.5, cellSize + 0.5);
+    }
+  }
+  ctx.restore();
+}
+
+/* ══════════════════════════════════════════════════
+   Certificate canvas layout
+   ══════════════════════════════════════════════════ */
+
+function renderCertificate() {
+  if (!currentCert) return;
+  const course = COURSES[currentCert.courseKey];
+  const series = SERIES[course.series];
+  const layoutKey = course.layout || series.layout;
+  const bgFn = BACKGROUNDS[layoutKey] || renderTopoContours;
+
+  const canvas = document.getElementById('certCanvas');
+  const ctx = canvas.getContext('2d');
+  const W = 2100, H = 2970;
+  const margin = 150;
+  const str = STRINGS[currentLang];
+  const color = course.color;
+  const textDark = '#1a1a18', textMid = '#4a4a46', textLight = '#8a8a84';
+
+  const seriesCourses = Object.entries(COURSES)
+    .filter(([_, c]) => c.series === course.series)
+    .sort(([a], [b]) => a.localeCompare(b));
+  const barWidthCurrent = 140, barWidthOther = 35, barGap = 10;
+  const totalBarW = seriesCourses.reduce((sum, [k]) => sum + (k === currentCert.courseKey ? barWidthCurrent : barWidthOther) + barGap, -barGap);
+  const barStart = W - totalBarW - 30;
+  const textRight = barStart - 50, textLeft = margin;
+  const cx = (textLeft + textRight) / 2, cw = textRight - textLeft;
+
+  ctx.fillStyle = '#fafaf8'; ctx.fillRect(0, 0, W, H);
+
+  let bx = barStart;
+  for (const [key, c] of seriesCourses) {
+    const isCurrent = key === currentCert.courseKey;
+    const w = isCurrent ? barWidthCurrent : barWidthOther;
+    ctx.fillStyle = c.color;
+    ctx.globalAlpha = isCurrent ? 0.45 : 0.22;
+    ctx.fillRect(bx, 0, w, H);
+    ctx.globalAlpha = 1;
+    bx += w + barGap;
+  }
+
+  bgFn(ctx, currentCert.code, color, W, H);
+
+  ctx.textAlign = 'center';
+  let y = margin + 200;
+  ctx.fillStyle = textLight; ctx.font = '400 28px "IBM Plex Mono", monospace';
+  ctx.fillText(series.org, cx, y); y += 110;
+  ctx.fillStyle = textDark; ctx.font = '700 110px "IBM Plex Mono", monospace';
+  ctx.fillText(series.name.toUpperCase(), cx, y); y += 60;
+  ctx.fillStyle = color; ctx.fillRect(cx - 200, y, 400, 3); y += 100;
+  ctx.fillStyle = textMid; ctx.font = '500 44px "IBM Plex Sans", sans-serif';
+  ctx.fillText(str.certOf, cx, y); y += 120;
+  ctx.fillStyle = textLight; ctx.font = '300 32px "IBM Plex Sans", sans-serif';
+  ctx.fillText(str.certifies, cx, y); y += 100;
+  ctx.fillStyle = textDark;
+  let nameSize = 72; ctx.font = `700 ${nameSize}px "IBM Plex Sans", sans-serif`;
+  while (ctx.measureText(currentCert.name).width > cw - 60 && nameSize > 36) {
+    nameSize -= 2; ctx.font = `700 ${nameSize}px "IBM Plex Sans", sans-serif`;
+  }
+  ctx.fillText(currentCert.name, cx, y); y += 100;
+  ctx.fillStyle = textLight; ctx.font = '300 32px "IBM Plex Sans", sans-serif';
+  ctx.fillText(str.completed, cx, y); y += 100;
+  ctx.fillStyle = color;
+  let titleSize = 48; const titleText = course.title[currentLang];
+  ctx.font = `600 ${titleSize}px "IBM Plex Mono", monospace`;
+  while (ctx.measureText(titleText).width > cw - 40 && titleSize > 28) {
+    titleSize -= 2; ctx.font = `600 ${titleSize}px "IBM Plex Mono", monospace`;
+  }
+  ctx.fillText(titleText, cx, y); y += 80;
+  ctx.fillStyle = textLight; ctx.font = '400 24px "IBM Plex Sans", sans-serif';
+  ctx.fillText(str.topics + ':', cx, y); y += 50;
+  ctx.textAlign = 'left'; ctx.fillStyle = textMid; ctx.font = '400 25px "IBM Plex Sans", sans-serif';
+  const bulletIndent = cx - cw / 2 + 40; const bulletTextX = bulletIndent + 30;
+  for (const item of course.desc[currentLang]) {
+    ctx.fillStyle = color; ctx.fillText('\u2022', bulletIndent, y);
+    ctx.fillStyle = textMid;
+    const wrapped = wrapText(ctx, item, cw - 100);
+    for (const line of wrapped) { ctx.fillText(line, bulletTextX, y); y += 36; }
+    y += 4;
+  }
+  ctx.textAlign = 'center'; y += 40;
+  ctx.fillStyle = textDark; ctx.font = '500 28px "IBM Plex Sans", sans-serif';
+  ctx.fillText(str.workload + ': ' + course.hours + ' ' + str.hours, cx, y); y += 80;
+  const dateObj = new Date((currentCert.date || new Date().toISOString().slice(0,10)) + 'T12:00:00');
+  const locale = currentLang === 'pt' ? 'pt-BR' : 'en-US';
+  const dateStr = new Intl.DateTimeFormat(locale, { year: 'numeric', month: 'long', day: 'numeric' }).format(dateObj);
+  ctx.fillStyle = textLight; ctx.font = '400 26px "IBM Plex Sans", sans-serif';
+  ctx.fillText(str.dateLabel + ': ' + dateStr, cx, y);
+
+  let by = H - margin - 80;
+  const baseURL = window.location.href.split('#')[0];
+  const shareURL = isPreview
+    ? `${baseURL}#preview=${encodeURIComponent(currentCert.courseKey)}`
+    : `${baseURL}#v=${encodeURIComponent(currentCert.code)}&n=${encodeURIComponent(currentCert.name)}`;
+  drawQR(ctx, shareURL, cx, by, 180, textDark); by -= 120;
+  ctx.fillStyle = textLight; ctx.font = '400 20px "IBM Plex Mono", monospace';
+  ctx.fillText(str.validURL + ': ' + baseURL, cx, by); by -= 50;
+  ctx.fillStyle = textMid; ctx.font = '500 24px "IBM Plex Mono", monospace';
+  ctx.fillText(str.validCode + ': ' + currentCert.code, cx, by); by -= 50;
+  ctx.fillStyle = color; ctx.fillRect(cx - 200, by, 400, 2); by -= 100;
+  ctx.fillStyle = textLight; ctx.font = '400 24px "IBM Plex Sans", sans-serif';
+  ctx.fillText(series.issuerTitle[currentLang], cx, by); by -= 45;
+  ctx.fillStyle = textDark; ctx.font = '600 34px "IBM Plex Sans", sans-serif';
+  ctx.fillText(series.issuer, cx, by); by -= 30;
+  ctx.strokeStyle = textLight; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(cx - 160, by); ctx.lineTo(cx + 160, by); ctx.stroke();
+
+  if (isPreview) {
+    by -= 10;
+    ctx.fillStyle = 'rgba(0,0,0,0.25)'; ctx.font = '700 32px "IBM Plex Mono", monospace'; ctx.textAlign = 'center';
+    ctx.fillText('SAMPLE \u2014 NOT A VALID CERTIFICATE', cx, by);
+    ctx.save(); ctx.translate(W / 2, H / 2); ctx.rotate(-Math.PI / 4);
+    ctx.font = '700 220px "IBM Plex Mono", monospace'; ctx.fillStyle = 'rgba(0,0,0,0.07)';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('SAMPLE', 0, -140); ctx.fillText('SAMPLE', 0, 140);
+    ctx.restore();
+  }
+}
+</script>
+</body>
+</html>
