@@ -191,6 +191,11 @@ ul li { margin-bottom: 0.3rem; }
 
 [lang-pane] { display: none; }
 [lang-pane].active { display: block; }
+
+/* Inline language-specific strings toggled by the <html lang> attribute. */
+[data-pt] { display: none; }
+html[lang="pt"] [data-en] { display: none; }
+html[lang="pt"] [data-pt] { display: inline; }
 </style>
 </head>
 <body>
