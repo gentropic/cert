@@ -130,7 +130,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add credentials/ endorsements/ pdfs/ ledger.jsonl ledger.tip ledger.tip.rekor.bundle status/.next-index
+          git add credentials/ endorsements/ ledger.jsonl ledger.tip ledger.tip.rekor.bundle status/.next-index
           git commit -m "Issue ${{ steps.issue.outputs.code }} for ${{ steps.parse.outputs.name }}"
           git push
 
@@ -148,7 +148,7 @@ jobs:
               `🔗 [View certificate](https://gentropic.org/cert/#v=${code}&n=${encName})`,
               `📄 [Signed credential JSON](https://gentropic.org/cert/credentials/${code}.json)`,
               `🔖 [Self-endorsement](https://gentropic.org/cert/endorsements/${code}.json)`,
-              `📑 [PDF certificate](https://gentropic.org/cert/pdfs/${code}.pdf)`,
+              `📑 PDF/A-3 certificate — download from the validator page`,
               `🪵 [Rekor inclusion proof](https://gentropic.org/cert/credentials/${code}.rekor.bundle)`,
               ``,
               `Verify the credential cryptographically at the validator link above, or with any OBv3-compatible verifier.`,

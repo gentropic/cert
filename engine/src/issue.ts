@@ -10,7 +10,6 @@ import { loadSigner } from "./keys.ts";
 import { createDocumentLoader } from "./contexts.ts";
 import { appendEntry } from "./ledger.ts";
 import { logBlob } from "./rekor.ts";
-import { loadPlexFonts, renderCertificatePdf } from "./pdf.ts";
 
 async function assignStatusIndex(cfg: StatusListConfig): Promise<number> {
   let current = 0;
@@ -167,49 +166,6 @@ export async function signAndPublish(
     ledgerIndex = entry.i;
   }
 
-  const credentialBytes = new TextEncoder().encode(credentialJson);
-  const endorsementBytes = new TextEncoder().encode(endorsementJson);
-
-  let pdfPath: string | undefined;
-  if (config.pdf) {
-    const validatorUrl = config.pdf.validatorUrlTemplate
-      .replace("{code}", encodeURIComponent(code))
-      .replace("{name}", encodeURIComponent(input.name));
-    const fonts = await loadPlexFonts(config.pdf.fontsDir);
-    const iccProfile = config.pdf.iccProfilePath
-      ? await Deno.readFile(config.pdf.iccProfilePath)
-      : undefined;
-    const pdfBytes = await renderCertificatePdf({
-      recipientName: input.name,
-      courseName: course.name,
-      courseCode: input.course,
-      credentialCode: code,
-      dateIso: validFromIso,
-      hours: course.hours,
-      topics: course.descBullets,
-      issuerName: course.seriesMeta?.issuerName ?? "Geoscientific Chaos Union",
-      issuerLabel: course.seriesMeta?.issuerLabel,
-      orgName: course.seriesMeta?.org,
-      seriesName: course.seriesMeta?.name,
-      validatorUrl,
-      accentColor: course.seriesMeta?.accent,
-      fonts,
-      issuerId: config.issuerId,
-      credentialHash,
-      iccProfile,
-      attachments: iccProfile
-        ? {
-          credentialJson: credentialBytes,
-          endorsementJson: endorsementBytes,
-          // rekorBundle filled in below after cosign runs
-        }
-        : undefined,
-    });
-    pdfPath = `${config.pdf.outputDir}/${code}.pdf`;
-    await Deno.mkdir(config.pdf.outputDir, { recursive: true });
-    await Deno.writeFile(pdfPath, pdfBytes);
-  }
-
   let rekorBundlePaths: IssuanceResult["rekorBundlePaths"];
   if (config.rekor) {
     const credBundle = `${config.repoRoot}/credentials/${code}.rekor.bundle`;
@@ -249,6 +205,5 @@ export async function signAndPublish(
     statusIndex,
     ledgerIndex,
     rekorBundlePaths,
-    pdfPath,
   };
 }

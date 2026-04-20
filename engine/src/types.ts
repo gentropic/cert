@@ -81,18 +81,6 @@ export interface RekorConfig {
   runner?: CosignRunner;
 }
 
-export interface PdfConfig {
-  outputDir: string;
-  // Template with `{code}` and `{name}` placeholders; produces the validator URL.
-  // Example: "https://gentropic.org/cert/#v={code}&n={name}"
-  validatorUrlTemplate: string;
-  // Directory containing IBMPlex{Sans,Mono}-{Regular,Bold}.otf.
-  fontsDir: string;
-  // Path to sRGB ICC profile. When set, PDF/A-3B enrichment activates and the
-  // signed credential + endorsement are embedded as associated files.
-  iccProfilePath?: string;
-}
-
 export interface EngineConfig {
   baseUrl: string;
   issuerId: string;
@@ -106,7 +94,6 @@ export interface EngineConfig {
   statusList?: StatusListConfig;
   ledger?: LedgerConfig;
   rekor?: RekorConfig;
-  pdf?: PdfConfig;
 }
 
 export interface IssuanceResult {
@@ -122,7 +109,6 @@ export interface IssuanceResult {
     endorsement: string;
     ledgerTip?: string;
   };
-  pdfPath?: string;
 }
 
 export interface Signer {

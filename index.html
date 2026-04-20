@@ -292,7 +292,7 @@ body::before {
       <button class="back-btn" onclick="showForm()">&#8592; New validation</button>
       <button class="lang-toggle active" id="btnEN" onclick="setLang('en')">EN</button>
       <button class="lang-toggle" id="btnPT" onclick="setLang('pt')">PT</button>
-      <a class="download-btn" id="pdfBtn" href="#" download>&#8595; PDF</a>
+      <button class="download-btn" id="pdfBtn" onclick="downloadPdf()">&#8595; PDF</button>
     </div>
     <div class="canvas-wrap">
       <canvas id="certCanvas" width="2100" height="2970"></canvas>
@@ -329,12 +329,9 @@ body::before {
 
 <script src="./qrcodegen-v1.8.0-es6.js"></script>
 <script type="module">
-import * as vc from 'https://esm.sh/@digitalbazaar/vc@7.3.0';
-import { DataIntegrityProof } from 'https://esm.sh/@digitalbazaar/data-integrity@2.5.0';
-import { cryptosuite as eddsaRdfc2022 } from 'https://esm.sh/@digitalbazaar/eddsa-rdfc-2022-cryptosuite@1.3.0';
-
-window.__vc = { vc, DataIntegrityProof, eddsaRdfc2022 };
-window.dispatchEvent(new Event('__vc-ready'));
+import * as engine from './validator-bundle.js';
+window.__engine = engine;
+window.dispatchEvent(new Event('__engine-ready'));
 </script>
 <script>
 /* ══════════════════════════════════════════════════
@@ -506,7 +503,6 @@ function showPreview() {
     const url = base + '#v=' + encodeURIComponent(currentCert.code) + '&n=' + encodeURIComponent(currentCert.name);
     document.getElementById('shareURL').value = url;
     document.getElementById('shareBtn').style.display = navigator.share ? 'block' : 'none';
-    document.getElementById('pdfBtn').href = `./pdfs/${currentCert.code}.pdf`;
     document.getElementById('pdfBtn').style.display = '';
     document.getElementById('dlCredential').href = `./credentials/${currentCert.code}.json`;
     document.getElementById('dlEndorsement').href = `./endorsements/${currentCert.code}.json`;
@@ -554,11 +550,78 @@ function shareCert() {
   }).catch(() => {});
 }
 
+async function downloadPdf() {
+  if (!currentCert || isPreview) return;
+  const btn = document.getElementById('pdfBtn');
+  const origText = btn.textContent;
+  btn.textContent = 'Generating…';
+  btn.disabled = true;
+  try {
+    const engine = await awaitEngine();
+    const course = COURSES[currentCert.courseKey];
+    const series = SERIES[course.series];
+
+    const [sansRegular, sansBold, monoRegular, monoBold, iccProfile, endorsement, rekorBundleResp] = await Promise.all([
+      fetchBytes('./fonts/IBMPlexSans-Regular.otf'),
+      fetchBytes('./fonts/IBMPlexSans-Bold.otf'),
+      fetchBytes('./fonts/IBMPlexMono-Regular.otf'),
+      fetchBytes('./fonts/IBMPlexMono-Bold.otf'),
+      fetchBytes('./sRGB-IEC61966-2.1.icc'),
+      fetchBytes(`./endorsements/${currentCert.code}.json`),
+      fetch(`./credentials/${currentCert.code}.rekor.bundle`),
+    ]);
+    const rekorBundle = rekorBundleResp.ok ? new Uint8Array(await rekorBundleResp.arrayBuffer()) : undefined;
+    const credentialBytes = new TextEncoder().encode(JSON.stringify(currentCert.credential, null, 2));
+
+    const bytes = await engine.renderCertificatePdf({
+      recipientName: currentCert.name,
+      courseName: course.title.en,
+      courseCode: currentCert.courseKey,
+      credentialCode: currentCert.code,
+      dateIso: currentCert.date + 'T00:00:00Z',
+      hours: course.hours,
+      topics: course.desc.en,
+      issuerName: series.issuer,
+      issuerLabel: series.issuerTitle.en,
+      orgName: series.org,
+      seriesName: series.name,
+      validatorUrl: `${location.origin}${location.pathname}#v=${encodeURIComponent(currentCert.code)}&n=${encodeURIComponent(currentCert.name)}`,
+      accentColor: series.pageAccent,
+      fonts: { sansRegular, sansBold, monoRegular, monoBold },
+      issuerId: ISSUER_DID,
+      credentialHash: await sha256Hex(JSON.stringify(currentCert.credential, null, 2)),
+      iccProfile,
+      attachments: { credentialJson: credentialBytes, endorsementJson: endorsement, rekorBundle },
+    });
+
+    const blob = new Blob([bytes], { type: 'application/pdf' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${currentCert.code}.pdf`;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  } catch (e) {
+    console.error('PDF generation failed:', e);
+    alert(`PDF generation failed: ${e.message}`);
+  } finally {
+    btn.textContent = origText;
+    btn.disabled = false;
+  }
+}
+
+async function fetchBytes(url) {
+  const r = await fetch(url);
+  if (!r.ok) throw new Error(`${url}: HTTP ${r.status}`);
+  return new Uint8Array(await r.arrayBuffer());
+}
+
 window.validate = validate;
 window.showForm = showForm;
 window.setLang = setLang;
 window.copyShare = copyShare;
 window.shareCert = shareCert;
+window.downloadPdf = downloadPdf;
 </script>
 <script>
 /* ══════════════════════════════════════════════════
@@ -583,6 +646,17 @@ function setTrust(rows) {
   document.getElementById('trustRows').innerHTML = rows.join('');
 }
 
+async function awaitEngine() {
+  if (!window.__engine) await new Promise((r) => window.addEventListener('__engine-ready', r, { once: true }));
+  return window.__engine;
+}
+
+async function sha256Hex(s) {
+  const data = new TextEncoder().encode(s);
+  const buf = await crypto.subtle.digest('SHA-256', data);
+  return Array.from(new Uint8Array(buf), (b) => b.toString(16).padStart(2, '0')).join('');
+}
+
 async function runTrustChecks() {
   const rows = [
     { state: 'pending', label: 'Signature', detail: 'verifying…' },
@@ -592,20 +666,17 @@ async function runTrustChecks() {
   ];
   setTrust(rows.map(trustRow));
 
-  // Wait for the esm.sh imports to resolve.
-  if (!window.__vc) await new Promise((r) => window.addEventListener('__vc-ready', r, { once: true }));
-  const { vc, DataIntegrityProof, eddsaRdfc2022 } = window.__vc;
-
+  const engine = await awaitEngine();
   const credential = currentCert.credential;
 
-  // ── Status list (cheap, do first) ──
+  // ── Status list ──
   try {
     const cs = credential.credentialStatus;
     if (cs && cs.statusListCredential) {
       const listRes = await fetch(cs.statusListCredential);
       if (listRes.ok) {
         const list = await listRes.json();
-        const revoked = await checkStatusBit(list, Number(cs.statusListIndex));
+        const revoked = await engine.checkStatus(list, Number(cs.statusListIndex));
         rows[1] = revoked
           ? { state: 'bad', label: 'Revocation', detail: 'Credential is REVOKED.' }
           : { state: 'ok', label: 'Revocation', detail: 'Not revoked.' };
@@ -646,8 +717,6 @@ async function runTrustChecks() {
   try {
     const rekorRes = await fetch(`./credentials/${currentCert.code}.rekor.bundle`);
     if (rekorRes.ok) {
-      const b = await rekorRes.json();
-      const time = b?.verificationMaterial?.timestampVerificationData ?? b?.rekorBundle ?? null;
       rows[3] = {
         state: 'ok',
         label: 'Rekor transparency',
@@ -655,7 +724,6 @@ async function runTrustChecks() {
         href: `https://search.sigstore.dev/?hash=${await sha256Hex(JSON.stringify(credential, null, 2))}`,
       };
       document.getElementById('dlRekor').style.display = '';
-      void time;
     } else if (rekorRes.status === 404) {
       rows[3] = { state: 'warn', label: 'Rekor transparency', detail: 'No Rekor bundle committed (Rekor logging was off for this issuance).' };
     } else {
@@ -666,90 +734,20 @@ async function runTrustChecks() {
   }
   setTrust(rows.map(trustRow));
 
-  // ── Signature (heavy — RDFC + verify) ──
+  // ── Signature (heaviest; RDFC canonicalization + verify) ──
   try {
-    const documentLoader = makeFetchingLoader();
-    const suite = new DataIntegrityProof({ cryptosuite: eddsaRdfc2022 });
-    const checkStatus = async () => ({ verified: true }); // already checked above
-    const result = credential.credentialStatus
-      ? await vc.verifyCredential({ credential, suite, documentLoader, checkStatus })
-      : await vc.verifyCredential({ credential, suite, documentLoader });
+    const documentLoader = engine.createFetchingDocumentLoader();
+    const result = await engine.verifyCredential(credential, { documentLoader });
     if (result.verified) {
       rows[0] = { state: 'ok', label: 'Signature', detail: `Ed25519 (${credential.proof?.cryptosuite || 'eddsa-rdfc-2022'}) verified against ${ISSUER_DID}.` };
     } else {
-      const err = result.error?.message || result.results?.[0]?.error?.message || 'unknown';
+      const err = result.errors?.[0]?.message || result.errors?.[0] || 'unknown';
       rows[0] = { state: 'bad', label: 'Signature', detail: `Invalid signature — ${err}` };
     }
   } catch (e) {
     rows[0] = { state: 'bad', label: 'Signature', detail: `Signature check error: ${e.message}` };
   }
   setTrust(rows.map(trustRow));
-}
-
-/* ── Status list bit decode ── */
-async function checkStatusBit(listCredential, index) {
-  const encoded = listCredential?.credentialSubject?.encodedList;
-  if (!encoded) throw new Error('status list missing encodedList');
-  const bytes = base64urlDecode(encoded);
-  const decompressed = await gunzip(bytes);
-  const byteIdx = index >>> 3;
-  const bitPos = 7 - (index & 7);
-  return ((decompressed[byteIdx] >> bitPos) & 1) === 1;
-}
-
-function base64urlDecode(s) {
-  const b64 = s.replace(/-/g, '+').replace(/_/g, '/') + '=='.slice(0, (4 - s.length % 4) % 4);
-  const bin = atob(b64);
-  const out = new Uint8Array(bin.length);
-  for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
-  return out;
-}
-
-async function gunzip(bytes) {
-  const stream = new Blob([bytes]).stream().pipeThrough(new DecompressionStream('gzip'));
-  return new Uint8Array(await new Response(stream).arrayBuffer());
-}
-
-async function sha256Hex(s) {
-  const data = new TextEncoder().encode(s);
-  const buf = await crypto.subtle.digest('SHA-256', data);
-  return Array.from(new Uint8Array(buf), (b) => b.toString(16).padStart(2, '0')).join('');
-}
-
-/* ── Fetching document loader for @digitalbazaar/vc ── */
-function makeFetchingLoader() {
-  const contexts = new Map();
-  // Minimal context pre-pin: fetch once per session.
-  async function pinContext(url) {
-    if (contexts.has(url)) return contexts.get(url);
-    const res = await fetch(url);
-    if (!res.ok) throw new Error(`context fetch failed ${url}: ${res.status}`);
-    const doc = await res.json();
-    contexts.set(url, doc);
-    return doc;
-  }
-  return async (url) => {
-    if (url.startsWith('did:web:')) {
-      const [did, frag] = url.split('#');
-      const rest = did.slice('did:web:'.length);
-      const [host, ...path] = rest.split(':');
-      const httpsUrl = path.length > 0 ? `https://${host}/${path.join('/')}/did.json` : `https://${host}/.well-known/did.json`;
-      const r = await fetch(httpsUrl);
-      if (!r.ok) throw new Error(`did:web failed: ${r.status}`);
-      const doc = await r.json();
-      if (frag) {
-        const vms = doc.verificationMethod || [];
-        const vm = vms.find((m) => m.id === url || m.id === `#${frag}`);
-        if (vm) return { contextUrl: null, documentUrl: url, document: vm };
-      }
-      return { contextUrl: null, documentUrl: url, document: doc };
-    }
-    const fetchUrl = url.split('#')[0];
-    const r = await fetch(fetchUrl);
-    if (!r.ok) throw new Error(`fetch ${url}: ${r.status}`);
-    const doc = await r.json();
-    return { contextUrl: null, documentUrl: url, document: doc };
-  };
 }
 </script>
 <script>
