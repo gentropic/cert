@@ -374,7 +374,9 @@ async function init() {
     const params = new URLSearchParams(hash);
     const preview = params.get('preview');
     if (preview) {
-      enterPreviewMode(preview, params.get('n') || 'Ana Costa');
+      const previewName = params.get('n') ||
+        (Math.random() < 0.5 ? 'Mitsuha Miyamizu' : 'Taki Tachibana');
+      enterPreviewMode(preview, previewName);
     } else {
       const code = params.get('v');
       const name = params.get('n');
