@@ -592,6 +592,7 @@ async function downloadPdf() {
       credentialHash: await sha256Hex(JSON.stringify(currentCert.credential, null, 2)),
       iccProfile,
       attachments: { credentialJson: credentialBytes, endorsementJson: endorsement, rekorBundle },
+      layout: course.layout || series.layout,
     });
 
     const blob = new Blob([bytes], { type: 'application/pdf' });
@@ -752,211 +753,26 @@ async function runTrustChecks() {
 </script>
 <script>
 /* ══════════════════════════════════════════════════
-   Seeded PRNG — mulberry32
+   Canvas2D adapter for the shared art DrawOp format
    ══════════════════════════════════════════════════ */
 
-function hashCode(str) {
-  let h = 0;
-  for (let i = 0; i < str.length; i++) h = ((h << 5) - h + str.charCodeAt(i)) | 0;
-  return h >>> 0;
-}
-function mulberry32(seed) {
-  return function () {
-    seed |= 0;
-    seed = seed + 0x6D2B79F5 | 0;
-    let t = Math.imul(seed ^ seed >>> 15, 1 | seed);
-    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
-    return ((t ^ t >>> 14) >>> 0) / 4294967296;
-  };
-}
-
-/* ══════════════════════════════════════════════════
-   2D Value Noise + Marching Squares (topo contours)
-   ══════════════════════════════════════════════════ */
-
-function generateNoiseField(rng, cols, rows, octaves) {
-  function makeGrid(c, r) {
-    const g = [];
-    for (let i = 0; i < r; i++) { g[i] = []; for (let j = 0; j < c; j++) g[i][j] = rng(); }
-    return g;
-  }
-  function sample(grid, x, y, gc, gr) {
-    const fx = x * (gc - 1), fy = y * (gr - 1);
-    const ix = Math.floor(fx), iy = Math.floor(fy);
-    const dx = fx - ix, dy = fy - iy;
-    const ix1 = Math.min(ix + 1, gc - 1);
-    const iy1 = Math.min(iy + 1, gr - 1);
-    return grid[iy][ix] * (1 - dx) * (1 - dy) + grid[iy][ix1] * dx * (1 - dy) + grid[iy1][ix] * (1 - dx) * dy + grid[iy1][ix1] * dx * dy;
-  }
-  const field = [];
-  for (let y = 0; y < rows; y++) field[y] = new Array(cols).fill(0);
-  let amp = 1, totalAmp = 0;
-  for (let o = 0; o < octaves; o++) {
-    const gc = Math.max(3, Math.floor(cols / Math.pow(2, octaves - 1 - o)));
-    const gr = Math.max(3, Math.floor(rows / Math.pow(2, octaves - 1 - o)));
-    const grid = makeGrid(gc, gr);
-    for (let y = 0; y < rows; y++)
-      for (let x = 0; x < cols; x++)
-        field[y][x] += sample(grid, x / (cols - 1), y / (rows - 1), gc, gr) * amp;
-    totalAmp += amp; amp *= 0.5;
-  }
-  for (let y = 0; y < rows; y++) for (let x = 0; x < cols; x++) field[y][x] /= totalAmp;
-  return field;
-}
-
-function marchingSquares(field, threshold, cols, rows) {
-  const segments = [];
-  for (let y = 0; y < rows - 1; y++) {
-    for (let x = 0; x < cols - 1; x++) {
-      const tl = field[y][x], tr = field[y][x + 1], bl = field[y + 1][x], br = field[y + 1][x + 1];
-      let idx = 0;
-      if (tl >= threshold) idx |= 8;
-      if (tr >= threshold) idx |= 4;
-      if (br >= threshold) idx |= 2;
-      if (bl >= threshold) idx |= 1;
-      if (idx === 0 || idx === 15) continue;
-      const lerp = (a, b) => (threshold - a) / (b - a);
-      const top = { x: x + lerp(tl, tr), y };
-      const right = { x: x + 1, y: y + lerp(tr, br) };
-      const bottom = { x: x + lerp(bl, br), y: y + 1 };
-      const left = { x, y: y + lerp(tl, bl) };
-      const add = (a, b) => segments.push([a, b]);
-      switch (idx) {
-        case 1: add(left, bottom); break; case 2: add(bottom, right); break;
-        case 3: add(left, right); break; case 4: add(top, right); break;
-        case 5: add(left, top); add(bottom, right); break;
-        case 6: add(top, bottom); break; case 7: add(left, top); break;
-        case 8: add(top, left); break; case 9: add(top, bottom); break;
-        case 10: add(top, right); add(left, bottom); break;
-        case 11: add(top, right); break; case 12: add(left, right); break;
-        case 13: add(bottom, right); break; case 14: add(left, bottom); break;
-      }
+function drawOpsToCanvas(ctx, ops) {
+  ctx.save();
+  for (const op of ops) {
+    const p = new Path2D(op.d);
+    if (op.fill) {
+      ctx.fillStyle = op.fill;
+      ctx.globalAlpha = op.fillOpacity ?? 1;
+      ctx.fill(p);
     }
-  }
-  return segments;
-}
-
-function renderTopoContours(ctx, code, color, W, H) {
-  const nCols = 40, nRows = 56, octaves = 3, numContours = 10, lineWidth = 2, opacityMin = 0.15, opacityRange = 0.20;
-  const rng = mulberry32(hashCode(code));
-  const field = generateNoiseField(rng, nCols, nRows, octaves);
-  const scaleX = W / (nCols - 1), scaleY = H / (nRows - 1);
-  ctx.save();
-  ctx.strokeStyle = color; ctx.lineWidth = lineWidth;
-  for (let i = 1; i <= numContours; i++) {
-    const t = i / (numContours + 1);
-    ctx.globalAlpha = opacityMin + (i / numContours) * opacityRange;
-    const segs = marchingSquares(field, t, nCols, nRows);
-    ctx.beginPath();
-    for (const [a, b] of segs) { ctx.moveTo(a.x * scaleX, a.y * scaleY); ctx.lineTo(b.x * scaleX, b.y * scaleY); }
-    ctx.stroke();
-  }
-  ctx.restore();
-}
-
-function renderBlockGrid(ctx, code, color, W, H) {
-  const rng = mulberry32(hashCode(code));
-  const nCols = 30, nRows = 42;
-  const field = generateNoiseField(rng, nCols, nRows, 3);
-  function sampleNoise(nx, ny) {
-    const fx = Math.min(nx, 1) * (nCols - 1), fy = Math.min(ny, 1) * (nRows - 1);
-    const ix = Math.floor(fx), iy = Math.floor(fy);
-    const dx = fx - ix, dy = fy - iy;
-    const ix1 = Math.min(ix + 1, nCols - 1), iy1 = Math.min(iy + 1, nRows - 1);
-    return field[iy][ix] * (1 - dx) * (1 - dy) + field[iy][ix1] * dx * (1 - dy) + field[iy1][ix] * (1 - dx) * dy + field[iy1][ix1] * dx * dy;
-  }
-  const rowH = 54; const rows = Math.ceil(H / rowH); const baseUnit = 50;
-  const unitChoices = [1, 1, 2, 2, 2, 3, 3, 4];
-  ctx.save();
-  for (let r = 0; r < rows; r++) {
-    const y = r * rowH;
-    let x = 0;
-    while (x < W) {
-      const units = unitChoices[Math.floor(rng() * unitChoices.length)];
-      let bw = baseUnit * units;
-      if (W - x - bw < baseUnit) bw = W - x;
-      if (bw <= 0) break;
-      const value = sampleNoise((x + bw / 2) / W, (y + rowH / 2) / H);
-      ctx.fillStyle = color; ctx.globalAlpha = 0.03 + value * 0.17;
-      ctx.fillRect(x, y, bw, rowH);
-      ctx.globalAlpha = 0.06; ctx.strokeStyle = color; ctx.lineWidth = 1;
-      ctx.strokeRect(x + 0.5, y + 0.5, bw - 1, rowH - 1);
-      x += bw;
+    if (op.stroke) {
+      ctx.strokeStyle = op.stroke;
+      ctx.globalAlpha = op.strokeOpacity ?? 1;
+      ctx.lineWidth = op.strokeWidth ?? 1;
+      ctx.stroke(p);
     }
   }
   ctx.restore();
-}
-
-function renderSkullsBg(ctx, code, color, W, H) {
-  const rng = mulberry32(hashCode(code));
-  const silverColor = '#8a8a84', goldColor = color;
-  ctx.save();
-  const placed = [];
-  const overlaps = (x, y, r) => {
-    for (const p of placed) {
-      const dx = x - p.x, dy = y - p.y;
-      const minDist = r + p.r + 8;
-      if (dx * dx + dy * dy < minDist * minDist) return true;
-    }
-    return false;
-  };
-  const goldRng = mulberry32(hashCode(code) + 7);
-  const goldBands = [0.08, 0.26, 0.44, 0.62, 0.80];
-  for (let i = 0; i < 5; i++) {
-    const scale = 100 + goldRng() * 50; const r = scale * 0.55;
-    let px, py, attempts = 0;
-    do { px = (0.15 + goldRng() * 0.55) * W; py = (goldBands[i] + goldRng() * 0.10) * H; attempts++; } while (overlaps(px, py, r) && attempts < 30);
-    placed.push({ x: px, y: py, r });
-    const gSkRng = mulberry32(Math.floor(goldRng() * 0xFFFFFF));
-    const rot = (goldRng() - 0.5) * 0.25;
-    ctx.save(); ctx.translate(px, py); ctx.rotate(rot); ctx.globalAlpha = 0.25;
-    ctx.strokeStyle = goldColor; ctx.fillStyle = goldColor;
-    drawSkull(ctx, 0, 0, scale, gSkRng); ctx.restore();
-  }
-  for (let i = 0; i < 200; i++) {
-    const scale = 35 + rng() * 45; const r = scale * 0.45;
-    let px, py, attempts = 0;
-    do { px = rng() * W; py = rng() * H; attempts++; } while (overlaps(px, py, r) && attempts < 40);
-    if (attempts >= 40) continue;
-    placed.push({ x: px, y: py, r });
-    const skRng = mulberry32(Math.floor(rng() * 0xFFFFFF));
-    const rot = (rng() - 0.5) * 0.4;
-    ctx.save(); ctx.translate(px, py); ctx.rotate(rot);
-    ctx.globalAlpha = 0.08 + rng() * 0.10;
-    ctx.strokeStyle = silverColor; ctx.fillStyle = silverColor;
-    drawSkull(ctx, 0, 0, scale, skRng); ctx.restore();
-  }
-  ctx.restore();
-}
-
-function drawSkull(ctx, cx, cy, size, rng) {
-  const s = size;
-  const craniumStretch = 0.9 + rng() * 0.2;
-  const jawWidth = 0.55 + rng() * 0.15;
-  const jawDrop = 0.35 + rng() * 0.15;
-  const eyeSpread = 0.25 + rng() * 0.10;
-  const eyeHeight = 0.05 + rng() * 0.10;
-  const eyeSize = 0.12 + rng() * 0.06;
-  const noseLen = 0.08 + rng() * 0.06;
-  const teethCount = 4 + Math.floor(rng() * 4);
-  ctx.lineWidth = Math.max(2, s * 0.02);
-  ctx.beginPath(); ctx.ellipse(cx, cy - s * 0.05, s * 0.45 * craniumStretch, s * 0.5, 0, 0, Math.PI * 2); ctx.stroke();
-  const jw = s * jawWidth, jd = s * jawDrop;
-  ctx.beginPath();
-  ctx.moveTo(cx - jw * 0.5, cy + s * 0.15);
-  ctx.quadraticCurveTo(cx - jw * 0.5, cy + s * 0.15 + jd, cx, cy + s * 0.15 + jd * 1.1);
-  ctx.quadraticCurveTo(cx + jw * 0.5, cy + s * 0.15 + jd, cx + jw * 0.5, cy + s * 0.15);
-  ctx.stroke();
-  const ex = s * eyeSpread, ey = cy - s * eyeHeight, er = s * eyeSize;
-  ctx.beginPath(); ctx.ellipse(cx - ex, ey, er, er * 0.85, 0, 0, Math.PI * 2); ctx.stroke();
-  ctx.beginPath(); ctx.ellipse(cx + ex, ey, er, er * 0.85, 0, 0, Math.PI * 2); ctx.stroke();
-  const ny = cy + s * 0.1, nl = s * noseLen;
-  ctx.beginPath(); ctx.moveTo(cx - nl * 0.5, ny); ctx.lineTo(cx + nl * 0.5, ny); ctx.lineTo(cx, ny + nl); ctx.closePath(); ctx.stroke();
-  const teethY = cy + s * 0.15 + jd * 0.3, teethH = jd * 0.4, teethSpan = jw * 0.4;
-  for (let t = 0; t < teethCount; t++) {
-    const tx = cx - teethSpan * 0.5 + (teethSpan / (teethCount - 1)) * t;
-    ctx.beginPath(); ctx.moveTo(tx, teethY); ctx.lineTo(tx, teethY + teethH); ctx.stroke();
-  }
 }
 
 /* ══════════════════════════════════════════════════
@@ -1001,13 +817,11 @@ function drawQR(ctx, url, cx, cy, size, color) {
    Certificate canvas layout
    ══════════════════════════════════════════════════ */
 
-function renderCertificate() {
+async function renderCertificate() {
   if (!currentCert) return;
   const course = COURSES[currentCert.courseKey];
   const series = SERIES[course.series];
   const layoutKey = course.layout || series.layout;
-  const backgrounds = { topo: renderTopoContours, blocks: renderBlockGrid, skulls: renderSkullsBg };
-  const bgFn = backgrounds[layoutKey] || renderTopoContours;
 
   const canvas = document.getElementById('certCanvas');
   const ctx = canvas.getContext('2d');
@@ -1039,7 +853,13 @@ function renderCertificate() {
     bx += w + barGap;
   }
 
-  bgFn(ctx, currentCert.code, color, W, H);
+  // Generative art from the engine bundle (via window.__engine.ART).
+  const engine = await awaitEngine();
+  const artFn = engine.ART[layoutKey];
+  if (artFn) {
+    const ops = artFn(currentCert.code, W, H, color);
+    drawOpsToCanvas(ctx, ops);
+  }
 
   ctx.textAlign = 'center';
   let y = margin + 200;

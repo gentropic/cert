@@ -12,6 +12,8 @@ import fontkit from "@pdf-lib/fontkit";
 import QRCode from "qrcode";
 
 import { applyPdfA3, type PdfAttachment } from "./pdfa.ts";
+import { ART } from "../art/_index.generated.ts";
+import type { DrawOp } from "../art/_primitives.ts";
 
 export interface FontBytes {
   sansRegular: Uint8Array;
@@ -56,12 +58,35 @@ export interface CertificateInput {
   credentialHash?: string; // sha256 hex of the signed credential JSON, for XMP
   iccProfile?: Uint8Array; // sRGB IEC61966-2.1; enables PDF/A-3 when + attachments supplied
   attachments?: PdfAttachments;
+  /** Layout key for the generative art background (topo / blocks / skulls / …). */
+  layout?: string;
 }
 
 function hexToRgb(hex: string): { r: number; g: number; b: number } {
   const h = hex.replace(/^#/, "");
   const n = parseInt(h.length === 3 ? h.split("").map((c) => c + c).join("") : h, 16);
   return { r: ((n >> 16) & 0xff) / 255, g: ((n >> 8) & 0xff) / 255, b: (n & 0xff) / 255 };
+}
+
+/** pdf-lib adapter for the shared art DrawOp format. */
+// deno-lint-ignore no-explicit-any
+function drawOpsToPage(page: any, ops: DrawOp[], pageHeight: number): void {
+  for (const op of ops) {
+    // deno-lint-ignore no-explicit-any
+    const options: any = { x: 0, y: pageHeight };
+    if (op.fill) {
+      const c = hexToRgb(op.fill);
+      options.color = rgb(c.r, c.g, c.b);
+      options.opacity = op.fillOpacity ?? 1;
+    }
+    if (op.stroke) {
+      const c = hexToRgb(op.stroke);
+      options.borderColor = rgb(c.r, c.g, c.b);
+      options.borderOpacity = op.strokeOpacity ?? 1;
+      options.borderWidth = op.strokeWidth ?? 1;
+    }
+    page.drawSvgPath(op.d, options);
+  }
 }
 
 function prettyDate(iso: string): string {
@@ -110,6 +135,17 @@ export async function renderCertificatePdf(input: CertificateInput): Promise<Uin
   const accentColor = rgb(accent.r, accent.g, accent.b);
   const ink = rgb(0.12, 0.12, 0.12);
   const muted = rgb(0.45, 0.45, 0.45);
+
+  // Generative art background (if a matching provider is registered).
+  if (input.layout && ART[input.layout]) {
+    const ops = ART[input.layout](
+      input.credentialCode,
+      width,
+      height,
+      input.accentColor ?? "#d4a017",
+    );
+    drawOpsToPage(page, ops, height);
+  }
 
   // Right-edge vertical color stripes (accent + cool neutrals).
   const stripeDefs = [

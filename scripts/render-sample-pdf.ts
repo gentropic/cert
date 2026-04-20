@@ -32,6 +32,7 @@ const bytes = await renderCertificatePdf({
   issuerId: "did:web:gentropic.org",
   credentialHash: "0".repeat(64),
   attachments: { credentialJson: stubJson, endorsementJson: stubJson },
+  layout: courseKey.startsWith("BM") ? "blocks" : courseKey === "PB-501" ? "skulls" : "topo",
   recipientName: "Jéssica Fernanda Bastos da Matta",
   courseName: course.name,
   courseCode: courseKey,

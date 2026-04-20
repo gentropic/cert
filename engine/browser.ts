@@ -19,3 +19,6 @@ export { verifyCredential, type VerificationResult } from "./src/verify.ts";
 export { checkStatus, extractBitstring, type StatusListCredential } from "./src/status.ts";
 export { verifyChain, getTip, type LedgerEntry } from "./src/ledger.ts";
 export { createFetchingDocumentLoader, createDocumentLoader } from "./src/contexts.ts";
+
+export { ART } from "./art/_index.generated.ts";
+export type { ArtProvider, DrawOp } from "./art/_primitives.ts";
