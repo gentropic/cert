@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GCU — Trust model</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #111110;
+  --surface: #1a1a18;
+  --border: #2a2a26;
+  --text: #d4d0c8;
+  --text-dim: #8a8780;
+  --text-faint: #5a5850;
+  --accent: #d4a017;
+  --accent-dim: rgba(212,160,23,0.12);
+  --green: #6abf69;
+  --red: #c0392b;
+  --mono: 'IBM Plex Mono', monospace;
+  --sans: 'IBM Plex Sans', sans-serif;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--sans);
+  font-weight: 300;
+  line-height: 1.65;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+body::before {
+  content: '';
+  position: fixed; inset: 0; z-index: 999;
+  pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+  background-size: 256px 256px;
+}
+.container {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 4rem 2rem 6rem;
+}
+.header {
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 1.25rem;
+  margin-bottom: 2.5rem;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+.logo {
+  font-family: var(--mono);
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--text);
+}
+.logo a { color: inherit; text-decoration: none; }
+.logo a:hover { color: var(--accent); }
+.tagline {
+  font-family: var(--mono);
+  font-size: 0.75rem;
+  color: var(--text-dim);
+}
+.lang-nav { font-family: var(--mono); font-size: 0.72rem; }
+.lang-nav a { color: var(--text-dim); text-decoration: none; padding: 0.2rem 0.5rem; border: 1px solid var(--border); border-radius: 3px; margin-left: 0.3rem; }
+.lang-nav a.active { color: var(--accent); border-color: var(--accent); background: var(--accent-dim); }
+.lang-nav a:hover { color: var(--text); }
+
+h1 {
+  font-family: var(--mono);
+  font-size: 2rem;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  margin-bottom: 0.75rem;
+  color: var(--text);
+}
+h2 {
+  font-family: var(--mono);
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--accent);
+  margin-top: 3rem;
+  margin-bottom: 1rem;
+  padding-top: 1rem;
+  border-top: 1px dashed var(--border);
+}
+h2:first-of-type { border-top: none; padding-top: 0; margin-top: 2rem; }
+h3 {
+  font-family: var(--sans);
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text);
+  margin-top: 1.5rem;
+  margin-bottom: 0.5rem;
+}
+p {
+  color: var(--text);
+  margin-bottom: 1rem;
+}
+p + p { margin-top: 0; }
+strong { color: var(--text); font-weight: 500; }
+em { color: var(--text-dim); font-style: italic; }
+code {
+  font-family: var(--mono);
+  font-size: 0.85em;
+  background: var(--surface);
+  color: var(--text-dim);
+  padding: 0.1em 0.35em;
+  border-radius: 3px;
+  border: 1px solid var(--border);
+}
+a { color: var(--accent); text-decoration: none; border-bottom: 1px solid transparent; transition: border-color 0.15s; }
+a:hover { border-bottom-color: var(--accent); }
+
+ul { margin-bottom: 1rem; padding-left: 1.5rem; }
+ul li { margin-bottom: 0.3rem; }
+
+.lede {
+  font-size: 1.05rem;
+  color: var(--text);
+  border-left: 2px solid var(--accent);
+  padding-left: 1rem;
+  margin: 1.5rem 0 2rem;
+}
+
+.stack {
+  display: grid;
+  gap: 1rem;
+  margin: 1.5rem 0;
+}
+.stack-row {
+  display: grid;
+  grid-template-columns: 1.8rem 1fr;
+  gap: 0.75rem;
+  align-items: start;
+  padding: 1rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+}
+.stack-num {
+  font-family: var(--mono);
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--accent);
+  line-height: 1.65;
+}
+.stack-row h3 {
+  font-family: var(--mono);
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text);
+  margin: 0 0 0.35rem;
+}
+.stack-row p {
+  font-size: 0.9rem;
+  color: var(--text-dim);
+  margin-bottom: 0;
+  line-height: 1.55;
+}
+.stack-row p + p { margin-top: 0.5rem; }
+
+.callout {
+  padding: 1rem 1.25rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-left: 2px solid var(--text-dim);
+  border-radius: 4px;
+  margin: 1.25rem 0;
+  font-size: 0.9rem;
+}
+.callout.warn { border-left-color: var(--accent); }
+.callout.red  { border-left-color: var(--red); }
+
+.footer {
+  margin-top: 4rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--border);
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  color: var(--text-faint);
+}
+.footer a { color: var(--text-dim); }
+.footer a:hover { color: var(--accent); }
+
+[lang-pane] { display: none; }
+[lang-pane].active { display: block; }
+</style>
+</head>
+<body>
+<div class="container">
+  <header class="header">
+    <div class="logo"><a href="./">GCU</a></div>
+    <div class="tagline"><span data-en>trust model</span><span data-pt>modelo de confiança</span></div>
+    <nav class="lang-nav">
+      <a href="#en" id="langEn" class="active">EN</a>
+      <a href="#pt" id="langPt">PT</a>
+    </nav>
+  </header>
+
+  <main>
+    <article lang-pane="en" class="active">
+
+      <h1>How to trust a GCU certificate</h1>
+      <p class="lede">
+        This page explains, in plain language, what a certificate issued by the Geoscientific
+        Chaos Union actually claims, what mechanisms back each claim, and what it does
+        <em>not</em> claim. The goal is that a curious non-specialist can read it in five minutes
+        and know exactly what they are looking at.
+      </p>
+
+      <h2>What this certificate is</h2>
+      <p>
+        A GCU certificate is a signed statement from the Geoscientific Chaos Union that
+        <strong>a named person completed a named workshop on a named date</strong>. Nothing more.
+      </p>
+      <p>
+        It is not a degree. It is not state-accredited. It is not a formal qualification recognized
+        by any ministry of education. In Brazil it sits under the “curso livre” legal category
+        (non-formal professional education); in the United States it is an unregulated
+        “certificate of completion”; in the European Union it falls under non-formal learning
+        outside the EQF unless a member state maps it explicitly. None of those contexts confer
+        academic credit or professional licensing.
+      </p>
+      <p>
+        What the certificate is useful for: professional community recognition, continuing
+        professional development (CPD) self-declaration under a member society’s rules, and
+        structured evidence of workshop attendance that an employer or collaborator can verify
+        independently. What it is not useful for: anything requiring formal academic credit.
+      </p>
+
+      <h2>How to verify a certificate</h2>
+      <p>
+        The fastest path is to click the QR code on the certificate (or open the validator URL at
+        the bottom) and the validator page will run every check below in your browser and tell
+        you the result. All verification is <strong>client-side</strong>: nothing is sent to GCU.
+      </p>
+      <p>
+        The authoritative artifact is the signed JSON credential, not the PDF. The PDF is a
+        human-readable rendering of the same content, and also carries the JSON inside it as a
+        PDF/A-3 associated file — your PDF reader’s attachment panel will show it. Any
+        OBv3-compatible verifier (1EdTech reference validator, Digital Bazaar, Walt.id) can verify
+        the JSON independently. GCU is not in the verification loop.
+      </p>
+
+      <h2>The trust stack</h2>
+      <p>
+        Five independent mechanisms back a GCU certificate. Each answers a different question.
+        Any one of them failing is a red flag.
+      </p>
+
+      <div class="stack">
+        <div class="stack-row">
+          <div class="stack-num">1</div>
+          <div>
+            <h3>Issuer signature (Ed25519 / eddsa-rdfc-2022)</h3>
+            <p>
+              The credential is signed by GCU’s Ed25519 private key. Byte-level tampering breaks
+              the signature. Forgery requires the private key, which is held as a GitHub Actions
+              secret and mirrored in hardware-backed offline storage.
+            </p>
+            <p>
+              Your browser verifies the signature against the public key published at
+              <code>did:web:gentropic.org</code>. If the DID document ever changes, the old key
+              stays listed so past credentials keep verifying.
+            </p>
+          </div>
+        </div>
+
+        <div class="stack-row">
+          <div class="stack-num">2</div>
+          <div>
+            <h3>Self-endorsement</h3>
+            <p>
+              Alongside the credential, GCU emits a signed <em>EndorsementCredential</em> — a
+              separate signed statement where the issuer endorses the authenticity of the
+              credential and the relevance of the skills demonstrated. This is self-endorsement,
+              not third-party endorsement, and is labeled as such. It sets up the schema so an
+              external endorser (a university, a professional society) can sign their own
+              endorsement later without any change to the data model.
+            </p>
+          </div>
+        </div>
+
+        <div class="stack-row">
+          <div class="stack-num">3</div>
+          <div>
+            <h3>Revocation (W3C BitstringStatusList)</h3>
+            <p>
+              Each credential carries an index into a public bit list. Bit 0 means “valid”;
+              bit 1 means “revoked.” To revoke, GCU flips the bit, re-signs the list, and commits
+              the change to this repository. The validator checks the list live and shows you the
+              current state.
+            </p>
+            <p>
+              Honest limitation: revocation only works if the verifier can fetch the list.
+              The list is mirrored to the Internet Archive monthly, and because it is a signed
+              document, its authenticity doesn’t depend on where the bytes come from. This failure
+              mode (revocation unavailable → valid-with-warning) is shared with every federated
+              revocation system, including TLS and GPG.
+            </p>
+          </div>
+        </div>
+
+        <div class="stack-row">
+          <div class="stack-num">4</div>
+          <div>
+            <h3>Public issuance ledger</h3>
+            <p>
+              Every credential GCU has ever issued is recorded as one line in a hash-chained JSONL
+              file in this repository. Each line commits to the previous one, so silently
+              inserting or modifying a historical entry would break every subsequent line’s hash
+              chain.
+            </p>
+            <p>
+              The validator checks that the credential’s hash appears in the ledger at the claimed
+              index. A credential GCU refuses to acknowledge in the ledger is evidence of foul
+              play, not evidence of validity.
+            </p>
+          </div>
+        </div>
+
+        <div class="stack-row">
+          <div class="stack-num">5</div>
+          <div>
+            <h3>Rekor transparency log (Sigstore)</h3>
+            <p>
+              Each credential’s hash is logged to Sigstore’s public Rekor transparency log at
+              issuance time. Rekor is operated by the OpenSSF (Linux Foundation), audited by
+              Trail of Bits, and is infrastructure GCU doesn’t control. The inclusion proof is
+              committed alongside the credential as a <code>.rekor.bundle</code> file.
+            </p>
+            <p>
+              Even if GCU’s own infrastructure disappears, the Rekor record independently
+              witnesses that the credential existed by the time it was logged. You can search
+              by credential hash on
+              <a href="https://search.sigstore.dev" target="_blank" rel="noopener">search.sigstore.dev</a>.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <h2>What this certificate does NOT guarantee</h2>
+      <p>
+        Equally important, because this is where well-intentioned readers get the wrong impression.
+      </p>
+      <ul>
+        <li>No accreditation. GCU is not a state-recognized educational institution.</li>
+        <li>No academic credit. The certificate confers no degree, diploma, or transferable credit.</li>
+        <li>No professional licensing. It does not qualify anyone for regulated professions
+          (engineering, medicine, law, accountancy, etc.).</li>
+        <li>No guarantee of employability. It’s evidence of attendance; hiring decisions are the
+          employer’s.</li>
+        <li>No substitute for formal education where that is legally required.</li>
+      </ul>
+      <p>
+        The certificate’s standing comes from GCU’s reputation and from the publicly auditable
+        trust stack above. That is a modest basis and we want it to be read as such.
+      </p>
+
+      <h2>Who GCU is</h2>
+      <p>
+        The Geoscientific Chaos Union is a small collective exploring browser-native scientific
+        computing, geoscience, and computational curiosity. Certificates are issued under the
+        signing authority of Arthur Endlein Correia, the named primary signer for the current
+        GCU workshops. The Ed25519 signing key is a GitHub Actions secret plus offline backup,
+        never in a browser or on a laptop.
+      </p>
+      <p>
+        Workshops are self-serve: you open the workshop page, complete it at your own pace, and
+        submit a completion hash shown on the claim form. A GitHub Actions workflow validates the
+        hash against a salt only the workshop page knows, signs the credential, and commits it to
+        this repository. There is no human review per credential. The trust story for that flow
+        is written out in <a href="policies/issuance.md">policies/issuance.md</a>.
+      </p>
+
+      <h2>Fork your own</h2>
+      <p>
+        The entire system is open source, including this page and the validator. A future
+        v2 release will extract the engine and design into a reusable template so forking an
+        instance becomes a configuration exercise; as of this writing you would need to read the
+        <a href="docs/SPEC-v1.md">spec</a> and
+        <a href="docs/IMPLEMENTATION-PLAN.md">implementation plan</a> and follow the phases.
+      </p>
+      <p>
+        Source: <a href="https://github.com/gentropic/cert" target="_blank" rel="noopener">github.com/gentropic/cert</a>.
+      </p>
+
+    </article>
+
+    <article lang-pane="pt">
+      <!-- Portuguese translation lands in a follow-up commit. For now, the EN pane is the fallback. -->
+      <h1>Como confiar num certificado GCU</h1>
+      <p class="lede">
+        (Tradução em português em breve. Por enquanto, consulte a versão em inglês acima —
+        <a href="#en" onclick="setLang('en')">EN</a>.)
+      </p>
+    </article>
+  </main>
+
+  <footer class="footer">
+    <a href="https://gentropic.org" target="_blank" rel="noopener">Geoscientific Chaos Union</a>
+    &nbsp;&middot;&nbsp; <a href="./">validator</a>
+    &nbsp;&middot;&nbsp; <a href="docs/SPEC-v1.md">spec</a>
+    &nbsp;&middot;&nbsp; <a href="https://github.com/gentropic/cert" target="_blank" rel="noopener">source</a>
+  </footer>
+</div>
+
+<script>
+function setLang(lang) {
+  document.querySelectorAll('[lang-pane]').forEach((el) => {
+    el.classList.toggle('active', el.getAttribute('lang-pane') === lang);
+  });
+  document.getElementById('langEn').classList.toggle('active', lang === 'en');
+  document.getElementById('langPt').classList.toggle('active', lang === 'pt');
+  document.documentElement.lang = lang;
+  history.replaceState(null, '', '#' + lang);
+}
+window.setLang = setLang;
+
+(function init() {
+  const hash = (window.location.hash || '').replace('#', '');
+  if (hash === 'pt' || hash === 'en') setLang(hash);
+  document.getElementById('langEn').addEventListener('click', (e) => { e.preventDefault(); setLang('en'); });
+  document.getElementById('langPt').addEventListener('click', (e) => { e.preventDefault(); setLang('pt'); });
+})();
+</script>
+</body>
+</html>
