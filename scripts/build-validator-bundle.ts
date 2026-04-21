@@ -52,8 +52,29 @@ ${entries}
 const providerDirs = await generateArtRegistry();
 console.log(`Art registry: ${providerDirs.join(", ")}`);
 
+const cryptoStubPath = resolve(repoRoot, "engine", "_browser-crypto-stub.ts");
+
+// Node `crypto` (and a few other Node built-ins) leak into the browser bundle
+// from deps that have runtime browser-fallback paths but still do a bare
+// `import ... from "crypto"`. Intercept the resolve and redirect to an empty
+// stub so the import succeeds and the dep's fallback logic (typically Web
+// Crypto detection) kicks in. This plugin runs BEFORE denoPlugins so it
+// catches the specifier before the Deno resolver converts it to node:crypto.
+const stubNodeBuiltinsPlugin = {
+  name: "stub-node-builtins",
+  setup(build: esbuild.PluginBuild) {
+    const stubs: Record<string, string> = {
+      crypto: cryptoStubPath,
+      "node:crypto": cryptoStubPath,
+    };
+    build.onResolve({ filter: /^(node:)?crypto$/ }, (args) => ({
+      path: stubs[args.path],
+    }));
+  },
+};
+
 const result = await esbuild.build({
-  plugins: [...denoPlugins({ configPath })],
+  plugins: [stubNodeBuiltinsPlugin, ...denoPlugins({ configPath })],
   entryPoints: [entryPoint],
   outfile,
   bundle: true,
