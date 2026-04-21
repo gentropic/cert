@@ -52,12 +52,26 @@ export async function verifyCredential(
   const checkStatus = async ({ credential: cred }: { credential: any }) => {
     const cs = (cred as CredentialWithStatus).credentialStatus;
     if (!cs) return { verified: true };
-    const listDoc = pinnedDocuments[cs.statusListCredential] as StatusListCredential | undefined;
+
+    // Try pinned documents first (offline/test path); fall back to the
+    // documentLoader (which may fetch via HTTPS in the fetching loader case).
+    let listDoc = pinnedDocuments[cs.statusListCredential] as StatusListCredential | undefined;
     if (!listDoc) {
-      const err = new Error(`status list not pinned: ${cs.statusListCredential}`);
-      statusErrors.push(err);
-      return { verified: false, error: err };
+      try {
+        const loaded = await documentLoader(cs.statusListCredential);
+        // deno-lint-ignore no-explicit-any
+        listDoc = (loaded as any).document as StatusListCredential;
+      } catch (e) {
+        const err = new Error(
+          `status list fetch failed for ${cs.statusListCredential}: ${
+            (e as Error).message ?? e
+          }`,
+        );
+        statusErrors.push(err);
+        return { verified: false, error: err };
+      }
     }
+
     const index = typeof cs.statusListIndex === "string"
       ? Number.parseInt(cs.statusListIndex, 10)
       : cs.statusListIndex;
