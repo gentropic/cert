@@ -305,7 +305,7 @@ body::before {
         <a class="download-btn" id="dlCredential" href="#" download>credential.json</a>
         <a class="download-btn" id="dlEndorsement" href="#" download>endorsement.json</a>
         <a class="download-btn" id="dlRekor" href="#" download style="display:none">rekor.bundle</a>
-        <a class="download-btn" id="dlVcPlayground" href="#" target="_blank" rel="noopener">Verify on VC Playground ↗</a>
+        <button class="download-btn" id="dlCopyJson" onclick="copyCredentialJson()">Copy credential JSON</button>
       </div>
     </div>
 
@@ -508,7 +508,6 @@ function showPreview() {
     document.getElementById('dlCredential').href = `./credentials/${currentCert.code}.json`;
     document.getElementById('dlEndorsement').href = `./endorsements/${currentCert.code}.json`;
     document.getElementById('dlRekor').href = `./credentials/${currentCert.code}.rekor.bundle`;
-    document.getElementById('dlVcPlayground').href = `https://vc.digitalbazaar.com/verifier/?credential=${encodeURIComponent(JSON.stringify(currentCert.credential))}`;
     document.getElementById('trustPanel').style.display = '';
   }
 
@@ -618,12 +617,24 @@ async function fetchBytes(url) {
   return new Uint8Array(await r.arrayBuffer());
 }
 
+function copyCredentialJson() {
+  if (!currentCert?.credential) return;
+  const json = JSON.stringify(currentCert.credential, null, 2);
+  navigator.clipboard.writeText(json).then(() => {
+    const btn = document.getElementById('dlCopyJson');
+    const orig = btn.textContent;
+    btn.textContent = 'Copied — paste into any verifier';
+    setTimeout(() => { btn.textContent = orig; }, 2500);
+  });
+}
+
 window.validate = validate;
 window.showForm = showForm;
 window.setLang = setLang;
 window.copyShare = copyShare;
 window.shareCert = shareCert;
 window.downloadPdf = downloadPdf;
+window.copyCredentialJson = copyCredentialJson;
 </script>
 <script>
 /* ══════════════════════════════════════════════════
