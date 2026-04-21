@@ -400,12 +400,201 @@ html[lang="pt"] [data-pt] { display: inline; }
     </article>
 
     <article lang-pane="pt">
-      <!-- Portuguese translation lands in a follow-up commit. For now, the EN pane is the fallback. -->
+
       <h1>Como confiar num certificado GCU</h1>
       <p class="lede">
-        (Tradução em português em breve. Por enquanto, consulte a versão em inglês acima —
-        <a href="#en" onclick="setLang('en')">EN</a>.)
+        Esta página explica, em linguagem simples, o que um certificado emitido pela Geoscientific
+        Chaos Union de fato afirma, quais mecanismos sustentam cada afirmação, e o que ele
+        <em>não</em> afirma. O objetivo é que um visitante curioso sem especialização técnica
+        consiga ler tudo em cinco minutos e saber exatamente o que está vendo.
       </p>
+
+      <h2>O que este certificado é</h2>
+      <p>
+        Um certificado GCU é uma declaração assinada da Geoscientific Chaos Union de que
+        <strong>uma pessoa identificada concluiu um workshop identificado em uma data
+        identificada</strong>. Nada além disso.
+      </p>
+      <p>
+        Não é um diploma. Não tem reconhecimento oficial do estado. Não é uma qualificação formal
+        reconhecida por qualquer ministério da educação. No Brasil se enquadra como
+        <em>curso livre</em> (educação profissional não-formal, conforme a Lei 9.394/96 e o
+        Decreto 5.154/2004); nos Estados Unidos é um <em>certificate of completion</em>
+        não-regulamentado; na União Europeia fica sob aprendizagem não-formal fora do Quadro
+        Europeu de Qualificações (QEQ), a menos que um país-membro o mapeie explicitamente.
+        Nenhum desses contextos confere créditos acadêmicos ou licenciamento profissional.
+      </p>
+      <p>
+        Para que o certificado serve: reconhecimento pela comunidade profissional, autodeclaração
+        de desenvolvimento profissional contínuo (CPD) conforme as regras da sociedade
+        profissional do portador, e evidência estruturada de participação em workshop que um
+        empregador ou colaborador pode verificar de forma independente. Para que não serve:
+        qualquer coisa que exija crédito acadêmico formal.
+      </p>
+
+      <h2>Como verificar um certificado</h2>
+      <p>
+        O caminho mais rápido é clicar no QR code do certificado (ou abrir a URL do validador no
+        rodapé do PDF) e a página do validador executa todas as verificações abaixo no seu
+        navegador e exibe o resultado. Toda verificação é <strong>client-side</strong>: nada é
+        enviado para a GCU.
+      </p>
+      <p>
+        O artefato autoritativo é a credencial JSON assinada, não o PDF. O PDF é uma renderização
+        legível do mesmo conteúdo e também carrega o JSON dentro dele como arquivo associado
+        PDF/A-3 — o painel de anexos do seu leitor de PDF vai exibi-lo. Qualquer verificador
+        compatível com OBv3 (validador de referência do 1EdTech, Digital Bazaar, Walt.id) pode
+        verificar o JSON de forma independente. A GCU não está no circuito de verificação.
+      </p>
+
+      <h2>A pilha de confiança</h2>
+      <p>
+        Cinco mecanismos independentes sustentam um certificado GCU. Cada um responde a uma
+        pergunta diferente. Se algum deles falhar, é um sinal de alerta.
+      </p>
+
+      <div class="stack">
+        <div class="stack-row">
+          <div class="stack-num">1</div>
+          <div>
+            <h3>Assinatura do emissor (Ed25519 / eddsa-rdfc-2022)</h3>
+            <p>
+              A credencial é assinada com a chave privada Ed25519 da GCU. Qualquer alteração em
+              nível de bytes quebra a assinatura. Falsificação exige a chave privada, guardada
+              como <em>secret</em> do GitHub Actions e espelhada em armazenamento offline com
+              suporte de hardware.
+            </p>
+            <p>
+              Seu navegador verifica a assinatura contra a chave pública publicada em
+              <code>did:web:gentropic.org</code>. Se o documento DID mudar, a chave antiga
+              permanece listada, então credenciais anteriores continuam verificáveis.
+            </p>
+          </div>
+        </div>
+
+        <div class="stack-row">
+          <div class="stack-num">2</div>
+          <div>
+            <h3>Auto-endosso</h3>
+            <p>
+              Junto com a credencial, a GCU emite um <em>EndorsementCredential</em> assinado —
+              uma declaração assinada separada em que o emissor endossa a autenticidade da
+              credencial e a relevância das competências demonstradas. É auto-endosso, não
+              endosso de terceiros, e é rotulado como tal. Estabelece o esquema para que um
+              endossante externo (uma universidade, uma sociedade profissional) possa assinar o
+              próprio endosso mais tarde, sem qualquer alteração no modelo de dados.
+            </p>
+          </div>
+        </div>
+
+        <div class="stack-row">
+          <div class="stack-num">3</div>
+          <div>
+            <h3>Revogação (W3C BitstringStatusList)</h3>
+            <p>
+              Cada credencial carrega um índice para uma lista pública de bits. Bit 0 significa
+              “válida”; bit 1 significa “revogada”. Para revogar, a GCU inverte o bit, reassina
+              a lista e faz commit da alteração neste repositório. O validador consulta a lista
+              em tempo real e exibe o estado atual.
+            </p>
+            <p>
+              Limitação honesta: a revogação só funciona se o verificador conseguir buscar a
+              lista. A lista é espelhada mensalmente no Internet Archive e, por ser um documento
+              assinado, sua autenticidade não depende de onde os bytes vêm. Esse modo de falha
+              (revogação indisponível → válido-com-aviso) é compartilhado por todo sistema de
+              revogação federado, inclusive TLS e GPG.
+            </p>
+          </div>
+        </div>
+
+        <div class="stack-row">
+          <div class="stack-num">4</div>
+          <div>
+            <h3>Registro público de emissões</h3>
+            <p>
+              Cada credencial que a GCU já emitiu está registrada como uma linha em um arquivo
+              JSONL encadeado por hash, neste repositório. Cada linha se compromete com a
+              anterior, então inserir ou modificar silenciosamente uma entrada histórica quebraria
+              a cadeia de hash de toda linha subsequente.
+            </p>
+            <p>
+              O validador confirma que o hash da credencial aparece no registro no índice
+              declarado. Uma credencial que a GCU se recuse a reconhecer no registro é evidência
+              de má-fé, não de validade.
+            </p>
+          </div>
+        </div>
+
+        <div class="stack-row">
+          <div class="stack-num">5</div>
+          <div>
+            <h3>Log de transparência Rekor (Sigstore)</h3>
+            <p>
+              O hash de cada credencial é registrado no log público de transparência Rekor, do
+              Sigstore, no momento da emissão. O Rekor é operado pela OpenSSF (Linux Foundation),
+              auditado pela Trail of Bits, e é infraestrutura que a GCU não controla. A prova de
+              inclusão é guardada junto com a credencial, como arquivo
+              <code>.rekor.bundle</code>.
+            </p>
+            <p>
+              Mesmo que a infraestrutura da GCU desapareça, o registro Rekor testemunha, de forma
+              independente, que a credencial existia na data em que foi registrada. Você pode
+              pesquisar por hash da credencial em
+              <a href="https://search.sigstore.dev" target="_blank" rel="noopener">search.sigstore.dev</a>.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <h2>O que este certificado NÃO garante</h2>
+      <p>
+        Igualmente importante, porque é aqui que leitores bem-intencionados geralmente obtêm a
+        impressão errada.
+      </p>
+      <ul>
+        <li>Sem credenciamento. A GCU não é instituição de ensino reconhecida pelo estado.</li>
+        <li>Sem crédito acadêmico. O certificado não confere diploma, título ou crédito
+          transferível.</li>
+        <li>Sem licenciamento profissional. Não qualifica ninguém para profissões regulamentadas
+          (engenharia, medicina, direito, contabilidade, etc.).</li>
+        <li>Sem garantia de empregabilidade. É evidência de participação; decisões de contratação
+          cabem ao empregador.</li>
+        <li>Sem substituir educação formal quando esta é exigida por lei.</li>
+      </ul>
+      <p>
+        O peso do certificado vem da reputação da GCU e da pilha de confiança publicamente
+        auditável acima. É uma base modesta, e queremos que seja lida como tal.
+      </p>
+
+      <h2>Quem é a GCU</h2>
+      <p>
+        A Geoscientific Chaos Union é um pequeno coletivo que explora computação científica no
+        navegador, geociências e curiosidade computacional. Os certificados são emitidos sob a
+        autoridade de assinatura de Arthur Endlein Correia, o signatário primário dos workshops
+        atuais da GCU. A chave Ed25519 de assinatura é um <em>secret</em> do GitHub Actions com
+        backup offline — nunca em um navegador, nunca em um laptop.
+      </p>
+      <p>
+        Os workshops são em autoserviço: você abre a página do workshop, conclui no seu ritmo e
+        envia um hash de conclusão exibido no formulário de registro. Um workflow do GitHub
+        Actions valida o hash contra um <em>salt</em> que só a página do workshop conhece, assina
+        a credencial e faz commit no repositório. Não há revisão humana por credencial. A
+        narrativa de confiança desse fluxo está escrita em
+        <a href="policies/issuance.md">policies/issuance.md</a>.
+      </p>
+
+      <h2>Crie sua própria instância</h2>
+      <p>
+        Todo o sistema é open source, incluindo esta página e o validador. Uma versão v2 futura
+        extrairá o engine e o design para um template reutilizável, de modo que criar uma
+        instância vire um exercício de configuração; no momento em que isto foi escrito, seria
+        necessário ler a <a href="docs/SPEC-v1.md">especificação</a> e o
+        <a href="docs/IMPLEMENTATION-PLAN.md">plano de implementação</a> e seguir as fases.
+      </p>
+      <p>
+        Código-fonte: <a href="https://github.com/gentropic/cert" target="_blank" rel="noopener">github.com/gentropic/cert</a>.
+      </p>
+
     </article>
   </main>
 
