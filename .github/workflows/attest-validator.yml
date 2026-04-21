@@ -1,0 +1,36 @@
+name: Attest validator build
+# SLSA Build Provenance v1 for the validator page and its trust artifacts.
+# Runs on any push that touches the served validator files. Signs an in-toto
+# attestation via Sigstore using the runner's OIDC identity (no key mgmt)
+# and publishes it to GitHub's attestation API.
+#
+# Verify a served file locally:
+#   gh attestation verify index.html --owner gentropic --repo cert
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - index.html
+      - trust.html
+      - validator-bundle.js
+      - qrcodegen-v1.8.0-es6.js
+      - .github/workflows/attest-validator.yml
+
+jobs:
+  attest:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      attestations: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Attest validator files
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-path: |
+            index.html
+            trust.html
+            validator-bundle.js
+            qrcodegen-v1.8.0-es6.js

@@ -111,6 +111,23 @@ deno task cli revoke PB-101-ABCDEF --reason "..."
 The workflow commits the updated status list and appends to
 `status/revocations.jsonl`.
 
+## Verifying validator provenance
+
+The `attest-validator.yml` workflow runs on every push that touches the
+validator files (`index.html`, `trust.html`, `validator-bundle.js`,
+`qrcodegen-v1.8.0-es6.js`) and produces a signed SLSA Build Provenance
+attestation via GitHub's attestation API. A paranoid user can verify a
+served file was produced by this repo:
+
+```
+gh attestation verify index.html --owner gentropic --repo cert
+```
+
+This proves the served bytes came from a specific commit in `gentropic/cert`,
+signed by the GitHub Actions runner via Sigstore. It does not prove the
+commit is trustworthy — that's an out-of-band audit. SLSA is defense in
+depth, not a primary control.
+
 ## Status list archival
 
 `archive-status.yml` runs on the 1st of each month (03:13 UTC) and asks

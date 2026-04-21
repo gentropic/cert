@@ -256,7 +256,7 @@ html[lang="pt"] [data-pt] { display: inline; }
 
       <h2>The trust stack</h2>
       <p>
-        Five independent mechanisms back a GCU certificate. Each answers a different question.
+        Six independent mechanisms back a GCU certificate. Each answers a different question.
         Any one of them failing is a red flag.
       </p>
 
@@ -346,6 +346,27 @@ html[lang="pt"] [data-pt] { display: inline; }
               witnesses that the credential existed by the time it was logged. You can search
               by credential hash on
               <a href="https://search.sigstore.dev" target="_blank" rel="noopener">search.sigstore.dev</a>.
+            </p>
+          </div>
+        </div>
+
+        <div class="stack-row">
+          <div class="stack-num">6</div>
+          <div>
+            <h3>SLSA provenance for the validator</h3>
+            <p>
+              The validator page is the code that runs signature verification in your browser —
+              if a tampered validator is served, it could lie to you about whether a credential
+              verifies. Every push to the served validator files produces a signed SLSA Build
+              Provenance attestation tying the file byte-for-byte to a specific commit in this
+              repository.
+            </p>
+            <p>
+              You can verify the page you’re reading was produced by this repo:
+              <code>gh attestation verify index.html --owner gentropic --repo cert</code>.
+              This doesn’t prove the commit is safe — a malicious commit could produce a
+              malicious page with valid provenance — but it does prove the served bytes match
+              code you can audit in the open. Defense in depth, not a standalone guarantee.
             </p>
           </div>
         </div>
@@ -449,7 +470,7 @@ html[lang="pt"] [data-pt] { display: inline; }
 
       <h2>A pilha de confiança</h2>
       <p>
-        Cinco mecanismos independentes sustentam um certificado GCU. Cada um responde a uma
+        Seis mecanismos independentes sustentam um certificado GCU. Cada um responde a uma
         pergunta diferente. Se algum deles falhar, é um sinal de alerta.
       </p>
 
@@ -541,6 +562,29 @@ html[lang="pt"] [data-pt] { display: inline; }
               independente, que a credencial existia na data em que foi registrada. Você pode
               pesquisar por hash da credencial em
               <a href="https://search.sigstore.dev" target="_blank" rel="noopener">search.sigstore.dev</a>.
+            </p>
+          </div>
+        </div>
+
+        <div class="stack-row">
+          <div class="stack-num">6</div>
+          <div>
+            <h3>Procedência SLSA do validador</h3>
+            <p>
+              A página do validador é o código que executa a verificação de assinatura no seu
+              navegador — se uma versão adulterada fosse servida, ela poderia mentir sobre
+              qualquer credencial. Cada push nos arquivos do validador gera uma atestação SLSA
+              Build Provenance assinada, vinculando o arquivo byte a byte a um commit específico
+              deste repositório.
+            </p>
+            <p>
+              Você pode verificar que a página está lendo agora foi produzida a partir deste
+              repositório:
+              <code>gh attestation verify index.html --owner gentropic --repo cert</code>.
+              Isso não prova que o commit é seguro — um commit malicioso pode produzir uma
+              página maliciosa com procedência válida — mas prova que os bytes servidos
+              correspondem a um código que você pode auditar abertamente. Defesa em profundidade,
+              não uma garantia isolada.
             </p>
           </div>
         </div>
