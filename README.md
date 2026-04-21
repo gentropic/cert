@@ -2,7 +2,7 @@
 
 Open Badges v3 / W3C Verifiable Credentials issuer for the Geoscientific Chaos Union (GCU). Serves at `https://gentropic.org/cert/` via GitHub Pages. Issuer identity: `did:web:gentropic.org`.
 
-Status: v1 in progress. See [`docs/IMPLEMENTATION-PLAN.md`](docs/IMPLEMENTATION-PLAN.md) for build phases, [`docs/SPEC-v1.md`](docs/SPEC-v1.md) for the full design, and [`docs/OPERATIONS.md`](docs/OPERATIONS.md) for the operator runbook (GitHub secrets, CLI usage, rotation procedures).
+Status: v1 in progress. See [`docs/IMPLEMENTATION-PLAN.md`](docs/IMPLEMENTATION-PLAN.md) for build phases, [`docs/SPEC-v1.md`](docs/SPEC-v1.md) for the full design, [`docs/OPERATIONS.md`](docs/OPERATIONS.md) for the operator runbook, and [`policies/issuance.md`](policies/issuance.md) for GCU's issuance policy (self-certification, honest about what it does and doesn't cover).
 
 ## Verify a credential
 
