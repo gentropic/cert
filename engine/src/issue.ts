@@ -106,6 +106,16 @@ export async function signAndPublish(
       achievement: {
         id: achievementId,
         type: ["Achievement"],
+        name: course.name,
+        description: course.description,
+        criteria: {
+          narrative:
+            `Attend the full ${course.hours}-hour ${course.name} workshop and complete the in-workshop exercises. Completion is verified via a workshop-session hash.`,
+        },
+        creditsAvailable: course.hours,
+        inLanguage: course.language,
+        ...(course.tags ? { tag: course.tags } : {}),
+        ...(course.alignment ? { alignment: course.alignment } : {}),
       },
     },
     ...(credentialStatus ? { credentialStatus } : {}),
@@ -116,6 +126,11 @@ export async function signAndPublish(
     suite,
     documentLoader,
   });
+  // OBv3 3.0 strict validators (verifybadge.org) expect proof to be an array
+  // even when there's a single proof. VC 2.0 allows either; wrap to be safe.
+  if (signedCredential.proof && !Array.isArray(signedCredential.proof)) {
+    signedCredential.proof = [signedCredential.proof];
+  }
 
   const unsignedEndorsement = {
     "@context": [
@@ -139,6 +154,9 @@ export async function signAndPublish(
     suite,
     documentLoader,
   });
+  if (signedEndorsement.proof && !Array.isArray(signedEndorsement.proof)) {
+    signedEndorsement.proof = [signedEndorsement.proof];
+  }
 
   const credentialJson = JSON.stringify(signedCredential, null, 2);
   const endorsementJson = JSON.stringify(signedEndorsement, null, 2);
